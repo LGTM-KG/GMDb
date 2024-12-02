@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rdflib import Graph
+import re
 
 local_g = Graph()
 local_g.parse('Integrated_Movies_Triples.ttl')
@@ -8,9 +9,10 @@ def query(query_str):
     list_of_data = []
     q_data = local_g.query(query_str) # Execute the SPARQL query
     for row in q_data:
+        poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
         data = {
             "movieName": str(row.movieName),      
-            "poster": str(row.poster),            
+            "poster": poster_url,    
         }
 
         list_of_data.append(data)
