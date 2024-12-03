@@ -81,10 +81,12 @@
          <div class="h-100 d-flex flex-column align-items-center justify-content-center">
             <h1 class="mb-4" style="font-weight: bold; color: whitesmoke;">GMDb: Graph Movie Database</h1>
             <div class="input-group rounded w-50">
-                <input type="search" class="form-control rounded-pill p-3" placeholder="What movie are you looking for?" aria-label="What movie are you looking for?" aria-describedby="search-addon" />
-                <button class="input-group-text border-0 rounded-pill" id="search-addon">
-                  <i class="fas fa-search"></i>
-                </button>
+                <form class="d-flex w-100" action="{% url 'gmdb:search_movies' %}" method="GET">
+                    <input type="search" class="form-control rounded-pill p-3" placeholder="What movie are you looking for?" aria-label="What movie are you looking for?" aria-describedby="search-addon" name="q"/>
+                    <button class="input-group-text border-0 rounded-pill" id="search-addon" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>

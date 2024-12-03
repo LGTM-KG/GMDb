@@ -115,3 +115,29 @@ def home_page(request):
     }
     
     return render(request, "home.html", context)
+
+def search_movies(request):
+    search_query = request.GET.get("q")
+
+    results = query("""
+    PREFIX : <http://example.com/data/> 
+    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX v: <http://example.com/vocab#>
+
+    SELECT DISTINCT ?movieName ?poster where {
+        ?s rdfs:label ?movieName ;
+            v:poster ?poster ;
+            v:genre ?genre .
+
+    FILTER CONTAINS(lcase(?movieName),\"""" + search_query.lower() + """\")
+    }
+    """)
+
+    context = {
+        'search_query': search_query,
+        'results': results
+    }
+
+    return render(request, "search.html", context)
