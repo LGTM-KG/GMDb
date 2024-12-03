@@ -91,110 +91,30 @@
         </div>
     </div>
 
-    <div class="container movie-recommendation mt-4">
-        <h3 style="color: whitesmoke;">Top 20 Highest Rating Movies</h3>
-        <div class="scrolling-wrapper-container">
-            <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="scrolling-wrapper">
-                {% for item in top_20_rating %}
-                <div class="item card">
-                    <a href="#">
-                        <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
+    {% for section in sections %}
 
-    <div class="container movie-recommendation mt-4">
-        <h3 style="color: whitesmoke;">Top 20 Highest Grossing Movies</h3>
-        <div class="scrolling-wrapper-container">
-            <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="scrolling-wrapper">
-                {% for item in top_20_grossing %}
-                <div class="item card">
-                    <a href="#">
-                        <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
-                    </a>
+        <div class="container movie-recommendation mt-4">
+            <h3 style="color: whitesmoke;">{{ section.title }}</h3>
+            <div class="scrolling-wrapper-container">
+                <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="scrolling-wrapper">
+                    {% for item in section.items %}
+                    <div class="item card">
+                        <a href="#">
+                            <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
+                        </a>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
-            <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
-                <i class="fas fa-chevron-right"></i>
-            </button>
         </div>
-    </div>
 
-    <div class="container movie-recommendation mt-4">
-        <h3 style="color: whitesmoke;">Romance Movies</h3>
-        <div class="scrolling-wrapper-container">
-            <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="scrolling-wrapper">
-                {% for item in romance %}
-                <div class="item card">
-                    <a href="#">
-                        <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="container movie-recommendation mt-4">
-        <h3 style="color: whitesmoke;">Comedy Movies</h3>
-        <div class="scrolling-wrapper-container">
-            <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="scrolling-wrapper">
-                {% for item in comedy %}
-                <div class="item card">
-                    <a href="#">
-                        <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="container movie-recommendation my-4">
-        <h3 style="color: whitesmoke;">Action Movies</h3>
-        <div class="scrolling-wrapper-container">
-            <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="scrolling-wrapper">
-                {% for item in action %}
-                <div class="item card">
-                    <a href="#">
-                        <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-            <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
+    {% endfor %}
 
     <script>
     function scrollMovies(btn, direction) {
