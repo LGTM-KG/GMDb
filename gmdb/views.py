@@ -111,5 +111,9 @@ def home_page(request):
         'comedy': top_20_comedy_list,
         'action': top_20_action_list
     }
-    
+
     return render(request, "home.html", context)
+
+
+def movie_detail(request, name):
+    return 0
