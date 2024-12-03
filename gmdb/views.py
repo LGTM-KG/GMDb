@@ -50,9 +50,6 @@ def home_page(request):
         ?s rdfs:label ?movieName ;
         v:worldWideSales ?worldWideSales ;
         v:poster ?poster .
-
-        # Aladdin doesn't have a poster (even though there is a link), so this filter will pass it
-        FILTER (?movieName != "Aladdin")
 	} 
 	ORDER BY DESC(?worldWideSales) 
 	LIMIT 20
