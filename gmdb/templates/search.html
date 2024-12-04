@@ -4,60 +4,25 @@
 {% block meta %}
 <title>GMDb: Find Your Movies</title>
 <style>
-    .scrolling-wrapper-container {
+    .grid-wrapper-container {
         position: relative;
     }
 
-    .scrolling-wrapper {
-        height: 240px;
+    .grid-wrapper {
         padding-right: 5px;
         padding-left: 5px;
         display: flex;
-        overflow-x: auto;
-        scroll-behavior: smooth;
     }
 
-    .scrolling-wrapper::-webkit-scrollbar {
-        width: 0;
-        height: 0;
-    }
-
-    .scrolling-wrapper .item {
+    .grid-wrapper .item {
         width: 150px;
         height: 215px;
         line-height: 120px;
         text-align: center;
         margin-right: 5px;
+        margin-bottom: 8px;
         flex-shrink: 0;
         background-color: black;
-    }
-
-    .scroll-arrow {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background-color: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: none;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .scroll-arrow:hover {
-        background-color: rgba(255, 255, 255, 0.4);
-    }
-
-    .scroll-left {
-        left: -50px;
-    }
-
-    .scroll-right {
-        right: -50px;
     }
 
     .card-img-top {
@@ -126,11 +91,8 @@
             {% endif %}
         </h3>
         {% if results %}
-        <div class="scrolling-wrapper-container">
-            <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div class="scrolling-wrapper">
+        <div class="grid-wrapper-container">
+            <div class="grid-wrapper flex-wrap">
                 {% for item in results %}
                 <div class="item card">
                     <a href="#">
@@ -139,28 +101,11 @@
                 </div>
                 {% endfor %}
             </div>
-            <button class="scroll-arrow scroll-right" onclick="scrollMovies(this, 'right')">
-                <i class="fas fa-chevron-right"></i>
-            </button>
         </div>
         {% else %}
         <div style="height: 200px;"></div>
         {% endif %}
     </div>
-
-    <script>
-    function scrollMovies(btn, direction) {
-        // Find the scrolling wrapper associated with this button
-        const scrollWrapper = btn.parentElement.querySelector('.scrolling-wrapper');
-        const scrollAmount = scrollWrapper.clientWidth * 0.8;
-        
-        if (direction === 'left') {
-            scrollWrapper.scrollLeft -= scrollAmount;
-        } else {
-            scrollWrapper.scrollLeft += scrollAmount;
-        }
-    }
-    </script>
 
 {% include 'footer.html' %}
 </body>
