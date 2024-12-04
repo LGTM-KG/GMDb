@@ -113,7 +113,14 @@
     </div>
 
     <div class="container movie-recommendation mt-4">
-        <h3>Search Results</h3>
+        <h3>
+            {% if results %}
+                {{ results|length }} results found for "{{search_query}}".
+            {% else %}
+                No results found for "{{search_query}}", try another search.
+            {% endif %}
+        </h3>
+        {% if results %}
         <div class="scrolling-wrapper-container">
             <button class="scroll-arrow scroll-left" onclick="scrollMovies(this, 'left')">
                 <i class="fas fa-chevron-left"></i>
@@ -131,6 +138,9 @@
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
+        {% else %}
+        <div style="height: 200px;"></div>
+        {% endif %}
     </div>
 
     <script>
