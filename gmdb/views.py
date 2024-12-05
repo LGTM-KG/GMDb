@@ -119,9 +119,9 @@ def home_page(request):
     return render(request, "home.html", context)
 
 def search_movies(request):
-    search_query = request.GET.get("q")
+    search_args = build_search_args(request.GET)
 
-    if search_query:
+    if request.GET.get("q"):
         results = query_search("""
         SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
             ?s rdfs:label ?movieName ;
@@ -135,7 +135,7 @@ def search_movies(request):
                 OPTIONAL { ?s v:poster ?poster }
                 OPTIONAL { ?s v:imdbScore ?imdbNode.
                 ?imdbNode v:rating ?imdbRating. }
-        FILTER CONTAINS(lcase(?movieName),\"""" + search_query.lower() + """\")
+        """ + search_args.get('search_filter') + """
         }
         GROUP BY ?movieName
         """)
@@ -145,11 +145,24 @@ def search_movies(request):
     print(results)
 
     context = {
-        'search_query': search_query,
+        'search_query': search_args.get('search_query'),
         'results': results
     }
 
     return render(request, "search.html", context)
+
+def build_search_args(request_data):
+    search_query = request_data.get("q")
+
+    if request_data.get("searchBy") == "extended":
+        search_filter = f"FILTER ( CONTAINS(lcase(?movieName), \"{search_query.lower()}\") || CONTAINS(lcase(?overview), \"{search_query.lower()}\") )"
+    else:
+        search_filter = f"FILTER CONTAINS(lcase(?movieName), \"{search_query.lower()}\")"
+    
+    return {
+        'search_query': search_query,
+        'search_filter': search_filter
+    }
 
 detail_q = prepareQuery(
     INITIAL_NAMESPACES + """ 
