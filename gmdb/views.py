@@ -98,8 +98,8 @@ def home_page(request):
 def search_movies(request):
     search_query = request.GET.get("q")
 
-    results = query("""
-    SELECT DISTINCT ?movieName ?poster ?overview where {
+    results = query_search("""
+    SELECT DISTINCT ?s ?movieName ?poster ?overview where {
         ?s rdfs:label ?movieName ;
             v:releasedYear ?releasedYear ;
             v:runtime ?runtime ;
