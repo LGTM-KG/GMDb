@@ -592,7 +592,7 @@ def movie_detail(request, id):
     if runtime:
         infobox_data.append({
             'label': 'Runtime',
-            'data': f'{runtime["minutes"]} minutes'
+            'data': f'{runtime_minutes} minutes'
         })
 
     if result.certification:
