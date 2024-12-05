@@ -101,19 +101,31 @@
                         <td class="infobox-data">
                             {% if entry.data %}
                                 {% if entry.data|isinstance:"list" %}
-                                    <!-- if there is only 1 -->
                                     {% if entry.data|length == 1 %}
-                                        {{ entry.data.0 }}
-                                    <!-- if there are multiple -->
+                                        {% if entry.data.0|isinstance:"dict" %}
+                                            <a href="{{ entry.data.0.url }}" rel="noopener" target="_blank">{{ entry.data.0.label }}</a>
+                                        {% else %}
+                                            {{ item }}
+                                        {% endif %}
                                     {% else %}
                                         <ul>
                                             {% for item in entry.data %}
-                                            <li>{{ item }}</li>
+                                                {% if item|isinstance:"dict" %}
+                                                    <li>
+                                                        <a href="{{ item.url }}" rel="noopener" target="_blank">{{ item.label }}</a>
+                                                    </li>
+                                                {% else %}
+                                                    <li>{{ item }}</li>
+                                                {% endif %}
                                             {% endfor %}
                                         </ul>
                                     {% endif %}
                                 {% else %}
-                                    {{ entry.data }}
+                                    {% if entry.data|isinstance:"dict" %}
+                                        <a href="{{ entry.data.url }}" rel="noopener" target="_blank">{{ entry.data.label }}</a>
+                                    {% else %}
+                                        {{ entry.data }}
+                                    {% endif %}
                                 {% endif %}
                             {% else %}
                                 <i>No information</i>
@@ -127,7 +139,11 @@
                         <td class="infobox-data" colspan="2">
 
                             {% for entry in infobox_links %}
-                            <a href="{{ entry.url }}" rel="noopener" target="_blank">{{ entry.label }}</a>
+                            <a href="{{ entry.url }}" rel="noopener" target="_blank">
+                                {% if entry.icon %}
+                                <iconify-icon icon="{{ entry.icon }}"></iconify-icon>
+                                {% endif %}
+                                {{ entry.label }}</a>
                             {% if not forloop.last %}·{% endif %}
 
                             {% endfor %}
@@ -139,7 +155,7 @@
         </div>
 
         <h2>Wikipedia</h2>
-        <p>{{ wp_lead }}</p>
+        <p>{{ abstract }}</p>
 
         <!-- 
 
