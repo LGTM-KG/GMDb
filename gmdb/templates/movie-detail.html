@@ -129,7 +129,7 @@
                     <div class="row no-gutters">
                         {% if cast.img and cast.img != None %}
                             <div class="col-12 col-md-4">
-                                <img src="{{ cast.img }}" class="cast-img" alt="">
+                                <img src="{{ cast.img }}" class="cast-img" alt="" loading="lazy">
                             </div>
                         {% endif %}
                         <div class="col-12 {% if cast.img %}col-md-8{% endif %}">
