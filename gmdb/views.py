@@ -42,7 +42,6 @@ def query_search(query_str, *args):
         runtime = int(row.runtime)
         directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
         directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
-        print(directorUrl)
     
         data = {
             "id": str(row.s).split('http://example.com/data/')[1],
