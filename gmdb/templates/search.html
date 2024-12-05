@@ -118,7 +118,7 @@
         <div class="mb-4">
             <h3>
                 {% if not search_query %}
-                    No results found, Enter a search query.
+                    No results found, enter a search query.
                 {% elif results %}
                     {{ results|length }} results found for "{{search_query}}".
                 {% else %}
@@ -173,9 +173,15 @@
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy3" value="gross">
+                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy3" value="newest">
                                 <label class="form-check-label" for="sortBy3">
-                                    Highest Grossing
+                                    Newest Released
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy4" value="oldest">
+                                <label class="form-check-label" for="sortBy4">
+                                    Oldest Released
                                 </label>
                             </div>
                         </div>

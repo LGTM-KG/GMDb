@@ -138,7 +138,7 @@ def search_movies(request):
         """ + search_args.get('search_filter') + """
         }
         GROUP BY ?movieName
-        """)
+        """ + search_args.get('sort_filter'))
     else:
         results = []
         
@@ -153,15 +153,27 @@ def search_movies(request):
 
 def build_search_args(request_data):
     search_query = request_data.get("q")
+    search_type = request_data.get("searchBy")
+    sort_type = request_data.get("sortBy")
 
-    if request_data.get("searchBy") == "extended":
+    if search_type == "extended":
         search_filter = f"FILTER ( CONTAINS(lcase(?movieName), \"{search_query.lower()}\") || CONTAINS(lcase(?overview), \"{search_query.lower()}\") )"
     else:
         search_filter = f"FILTER CONTAINS(lcase(?movieName), \"{search_query.lower()}\")"
+
+    if sort_type == "rating":
+        sort_filter = "ORDER BY DESC(?imdbRating)"
+    elif sort_type == "oldest":
+        sort_filter = "ORDER BY ASC(?releasedYear)"
+    elif sort_type == "newest":
+        sort_filter = "ORDER BY DESC(?releasedYear)"
+    else:
+        sort_filter = "ORDER BY ASC(?movieName)"
     
     return {
         'search_query': search_query,
-        'search_filter': search_filter
+        'search_filter': search_filter,
+        'sort_filter': sort_filter
     }
 
 detail_q = prepareQuery(
