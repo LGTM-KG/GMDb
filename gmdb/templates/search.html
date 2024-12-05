@@ -12,6 +12,8 @@
         padding-right: 5px;
         padding-left: 5px;
         display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
     .grid-wrapper .item {
@@ -23,6 +25,11 @@
         margin-bottom: 8px;
         flex-shrink: 0;
         background-color: black;
+    }
+
+    .grid-wrapper .item:hover {
+        transform: scale(1.05);
+        z-index: 2;
     }
 
     .card-img-top {
@@ -59,6 +66,47 @@
     .movie-recommendation {
         flex: 1;
     }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 400px;
+        height: 100vh;
+        background-color: #1c1c1c;
+        color: whitesmoke;
+        box-shadow: -4px 0 8px rgba(0, 0, 0, 0.5);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        z-index: 999;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .sidebar-poster {
+        width: 100%;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .info-content {
+        padding: 10px;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: whitesmoke;
+        font-size: 24px;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: pointer;
+    }
 </style>
 {% endblock meta %}
 
@@ -92,12 +140,10 @@
         </h3>
         {% if results %}
         <div class="grid-wrapper-container">
-            <div class="grid-wrapper flex-wrap">
+            <div class="grid-wrapper">
                 {% for item in results %}
-                <div class="item card">
-                    <a href="#">
-                        <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}" width="100" height="200"/>
-                    </a>
+                <div class="item card" onclick="showInfo('{{ item.movieName }}', '{{ item.poster }}', '{{ item.overview }}', '{{ item.director }}', '{{ item.releasedYear }}', '{{ item.imdbScore }}', '{{ item.runtime }}')">
+                    <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}"/>
                 </div>
                 {% endfor %}
             </div>
@@ -106,6 +152,37 @@
         <div style="height: 200px;"></div>
         {% endif %}
     </div>
+
+    <div class="sidebar" id="info-box">
+        <div class="info-content">
+            <button class="close-btn" onclick="closeInfo()">&times;</button>
+            <h4 class="movie-title" id="movie-title"></h4>
+            <img src="" alt="" id="sidebar-poster" class="sidebar-poster">
+            <p id="movie-overview"></p>
+            <p id="movie-info"></p>
+        </div>
+    </div>
+
+    <script>
+        function showInfo(title, poster, overview, director, year, score, runtime) {
+            document.getElementById('movie-title').textContent = title;
+            document.getElementById('sidebar-poster').src = poster;
+            document.getElementById('movie-overview').textContent = overview;
+            document.getElementById('movie-info').innerHTML = `
+                <strong>Director:</strong> ${director}<br>
+                <strong>Release Year:</strong> ${year}<br>
+                <strong>IMDb Score:</strong> ${score}<br>
+                <strong>Runtime:</strong> ${runtime} minutes
+            `;
+    
+            document.getElementById('info-box').classList.add('active');
+        }
+    
+        function closeInfo() {
+            document.getElementById('info-box').classList.remove('active');
+        }
+    
+        </script>
 
 {% include 'footer.html' %}
 </body>
