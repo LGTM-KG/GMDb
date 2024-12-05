@@ -41,15 +41,19 @@ def query_search(query_str, *args):
     for row in q_data:
         poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
         runtime = int(row.runtime)
-        directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
-        directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
+        if row.director:
+            directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
+            directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
+        else:
+            directorLabel = "Unknown"
+            directorUrl = "Unknown"
     
         data = {
             "id": str(row.s).split('http://example.com/data/')[1],
             "entity_url": str(row.s),
             "movieName": str(row.movieName),      
             "poster": poster_url,
-            "imdbRating": str(row.imdbRating),
+            "imdbRating": str(row.imdbRating) if row.imdbRating else "N/A",
             "runtime": f"{runtime // 60} h {runtime % 60} m",
             "releasedYear": str(row.releasedYear),
             "directorLabel": directorLabel,
@@ -128,14 +132,14 @@ def search_movies(request):
             ?s rdfs:label ?movieName ;
                 v:releasedYear ?releasedYear ;
                 v:runtime ?runtime ;
-                v:overview ?overview ;
-                v:hasFilmCrew [
+                v:overview ?overview .
+                OPTIONAL { ?s v:hasFilmCrew [
                     v:hasRole v:Director ;
                     v:filmCrew ?director
-                ] .
+                ] . }
                 OPTIONAL { ?s v:poster ?poster }
-                OPTIONAL { ?s v:imdbScore ?imdbNode.
-                ?imdbNode v:rating ?imdbRating. }
+                OPTIONAL { ?s v:imdbScore ?imdbNode .
+                ?imdbNode v:rating ?imdbRating . }
         """ + search_args.get('search_filter') + """
         }
         GROUP BY ?movieName
@@ -580,9 +584,12 @@ def movie_detail(request, id):
 
     # Poster
 
-    poster = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(result.poster))
-    request_poster = requests.head(poster)
-    if request_poster.status_code != 200:
+    if result.poster:
+        poster = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(result.poster))
+        request_poster = requests.head(poster)
+        if request_poster.status_code != 200:
+            poster = None
+    else:
         poster = None
 
     # Abstract
