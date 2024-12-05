@@ -563,8 +563,6 @@ def movie_detail(request, id):
         release_year = datetime.datetime.strptime(result.releaseDate, "%Y-%m-%d").year
 
     release_date = result.releaseDate
-    print(result_data)
-    print(release_date)
     if release_date:
         release_date = datetime.datetime.strptime(release_date, "%Y-%m-%d").strftime("%d %B %Y")
     elif release_year:
