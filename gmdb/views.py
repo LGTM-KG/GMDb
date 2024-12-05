@@ -121,23 +121,27 @@ def home_page(request):
 def search_movies(request):
     search_query = request.GET.get("q")
 
-    results = query_search("""
-    SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
-        ?s rdfs:label ?movieName ;
-            v:releasedYear ?releasedYear ;
-            v:runtime ?runtime ;
-            v:overview ?overview ;
-            v:hasFilmCrew [
-                v:hasRole v:Director ;
-                v:filmCrew ?director
-            ] .
-            OPTIONAL { ?s v:poster ?poster }
-            OPTIONAL { ?s v:imdbScore ?imdbNode.
-               ?imdbNode v:rating ?imdbRating. }
-    FILTER CONTAINS(lcase(?movieName),\"""" + search_query.lower() + """\")
-    }
-    GROUP BY ?movieName
-    """)
+    if search_query:
+        results = query_search("""
+        SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
+            ?s rdfs:label ?movieName ;
+                v:releasedYear ?releasedYear ;
+                v:runtime ?runtime ;
+                v:overview ?overview ;
+                v:hasFilmCrew [
+                    v:hasRole v:Director ;
+                    v:filmCrew ?director
+                ] .
+                OPTIONAL { ?s v:poster ?poster }
+                OPTIONAL { ?s v:imdbScore ?imdbNode.
+                ?imdbNode v:rating ?imdbRating. }
+        FILTER CONTAINS(lcase(?movieName),\"""" + search_query.lower() + """\")
+        }
+        GROUP BY ?movieName
+        """)
+    else:
+        results = []
+        
     print(results)
 
     context = {
