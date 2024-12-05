@@ -112,23 +112,7 @@
 
 {% block content %}
 <body>
-    <div class="hero">
-         <div class="h-100 d-flex flex-row align-items-center justify-content-center container">
-            <h1 class="font-weight-bold text-nowrap mx-2">
-                <i class="fa-solid fa-hexagon-nodes"></i>
-                <i class="fa-solid fa-film"></i> 
-                GMDb
-            </h1>
-            <div class="input-group rounded mx-2">
-                <form class="d-flex w-100" action="{% url 'gmdb:search_movies' %}" method="GET">
-                    <input type="search" class="form-control rounded-pill p-3" placeholder="What movie are you looking for?" value="{{search_query}}" aria-label="What movie are you looking for?" aria-describedby="search-addon" name="q"/>
-                    <button class="input-group-text border-0 rounded-pill" id="search-addon" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+    {% include 'header.html' %}
 
     <div class="container movie-recommendation mt-4">
         <h3 class="mb-4">
