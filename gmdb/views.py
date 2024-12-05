@@ -18,25 +18,49 @@ PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX schema: <http://schema.org/>
 """
 
+def query_home_page(query_str, *args):
+    returned_data = []
+    q_data = local_g.query(INITIAL_NAMESPACES + query_str, *args)
+    for row in q_data:
+        poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
+    
+        data = {
+            "id": str(row.s).split('http://example.com/data/')[1],
+            "entity_url": str(row.s),
+            "movieName": str(row.movieName),      
+            "poster": poster_url,
+        }
+
+        returned_data.append(data)
+    return returned_data
+
 def query_search(query_str, *args):
     returned_data = []
     q_data = local_g.query(INITIAL_NAMESPACES + query_str, *args)
     for row in q_data:
         poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
-        id = str(row.s)
-        print(1, id)
+        runtime = int(row.runtime)
+        directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
+        directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
+        print(directorUrl)
+    
         data = {
             "id": str(row.s).split('http://example.com/data/')[1],
             "entity_url": str(row.s),
             "movieName": str(row.movieName),      
-            "poster": poster_url,    
+            "poster": poster_url,
+            "imdbRating": str(row.imdbRating),
+            "runtime": f"{runtime // 60} h {runtime % 60} m",
+            "releasedYear": str(row.releasedYear),
+            "directorLabel": directorLabel,
+            "directorUrl": f"https://dbpedia.org/resource/{directorUrl}"
         }
 
         returned_data.append(data)
     return returned_data
 
 def query_genre(genre):
-    return query_search("""
+    return query_home_page("""
     SELECT ?s ?movieName ?poster where {
         ?s rdfs:label ?movieName ;
         v:poster ?poster ;
@@ -49,7 +73,7 @@ def query_genre(genre):
 # Create your views here.
 def home_page(request):
     # Top 20 Highest Rating Movies
-    top_20_rating_list = query_search("""
+    top_20_rating_list = query_home_page("""
     SELECT ?s ?movieName ?poster where {
         ?s rdfs:label ?movieName ;
         v:poster ?poster .
@@ -57,7 +81,7 @@ def home_page(request):
     """)
 
     # Top 20 Highest Grossing Movies
-    top_20_grossing_list = query_search("""
+    top_20_grossing_list = query_home_page("""
     SELECT ?s ?movieName ?poster ?worldWideSales WHERE {
         ?s rdfs:label ?movieName ;
         v:worldWideSales ?worldWideSales ;
@@ -99,11 +123,15 @@ def search_movies(request):
     search_query = request.GET.get("q")
 
     results = query_search("""
-    SELECT DISTINCT ?s ?movieName ?poster ?overview where {
+    SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
         ?s rdfs:label ?movieName ;
             v:releasedYear ?releasedYear ;
             v:runtime ?runtime ;
-            v:overview ?overview .
+            v:overview ?overview ;
+            v:hasFilmCrew [
+                v:hasRole v:Director ;
+                v:filmCrew ?director
+            ] .
             OPTIONAL { ?s v:poster ?poster }
             OPTIONAL { ?s v:imdbScore ?imdbNode.
                ?imdbNode v:rating ?imdbRating. }
@@ -111,6 +139,7 @@ def search_movies(request):
     }
     GROUP BY ?movieName
     """)
+    print(results)
 
     context = {
         'search_query': search_query,
