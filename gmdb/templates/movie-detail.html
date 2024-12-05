@@ -18,19 +18,35 @@
             </div>
             <div class="movie-header-overview">
                 <p>{{ overview }}</p>
+                <h2 class="h5 mb-2">Watch</h2>
+                <p>
+
+                    {% for service in streaming_data %}
+                        {% for url in service.urls %}
+                            {% if url and url != "None" %}
+                                <a class="btn btn-{{ service.theme }} mb-1" href="{{ url }}" role="button" rel="noopener" target="_blank" style="background-color: {{ service.color }}">
+                                    {% if service.icon %}
+                                        <iconify-icon icon="{{ service.icon }}"></iconify-icon>
+                                    {% endif %}
+                                    {{ service.label }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </p>
             </div>
             <div class="movie-header-rating">
                 {% if rating.imdb_rating %}
                     <div>
                         <p class="movie-header-rating-source">IMDb</p>
-                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.imdb_rating }}</p>
+                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.imdb_rating }} <small>/10</small></p>
                         <p class="movie-header-rating-sub">from {{ rating.imdb_votes }} votes</p>
                     </div>
                 {% endif %}
                 {% if rating.meta_score %}
                     <div>
-                        <p class="movie-header-rating-source">Meta</p>
-                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.meta_score }}</p>
+                        <p class="movie-header-rating-source">Metacritic</p>
+                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.meta_score }} <small>/100</small></p>
                     </div>
                 {% endif %}
             </div>
@@ -131,8 +147,12 @@
                             <div class="col-12 col-md-4">
                                 <img src="{{ cast.img }}" class="cast-img" alt="" loading="lazy">
                             </div>
+                        {% else %}
+                            <div class="col-12 col-md-4">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a1/Sem_imagem_%28cropped%29.jpg" class="cast-img" alt="" loading="lazy">
+                            </div>
                         {% endif %}
-                        <div class="col-12 {% if cast.img %}col-md-8{% endif %}">
+                        <div class="col-12 col-md-8">
                             <div class="card-body">
                                 <h5 class="card-title {% if not cast.role %}mb-0{% endif %}">{% if cast.url %}<a href="{{ cast.url }}">{% endif %}{{ cast.label }}{% if cast.url %}</a>{% endif %}</h5>
                                 {% if cast.role %}

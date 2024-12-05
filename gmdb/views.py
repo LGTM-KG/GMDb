@@ -197,13 +197,13 @@ DETAIL_Q = prepareQuery(
         OPTIONAL { ?s v:releaseDate ?releaseDate . }
         OPTIONAL { ?s v:runtime ?runtime . }
         OPTIONAL { ?s v:releasedYear ?releasedYear . }
-        OPTIONAL { ?s v:releasedDate ?releasedDate . }
         OPTIONAL { ?s v:budget ?budget . }
         OPTIONAL { ?s v:certification ?certification . }
         OPTIONAL { ?s v:domesticOpening ?domesticOpening . }
         OPTIONAL { ?s v:domesticSales ?domesticSales . }
         OPTIONAL { ?s v:internationalSales ?internationalSales . }
         OPTIONAL { ?s v:worldWideSales ?worldWideSales . }
+        OPTIONAL { ?s v:gross ?gross . }
         OPTIONAL {
             ?s v:metaScore ?metaScore .
         }
@@ -229,13 +229,54 @@ DETAIL_Q = prepareQuery(
                 ?originalLanguage ^schema:about ?originalLanguageArticle .
                 ?originalLanguageArticle schema:isPartOf <https://en.wikipedia.org/>.
             }
+            OPTIONAL {
+                ?item wdt:P344 ?cinematographer .
+                ?cinematographer rdfs:label ?cinematographerLabel .
+                FILTER(LANG(?cinematographerLabel) = "en")
+                OPTIONAL {
+                    ?cinematographer ^schema:about ?cinematographerArticle .
+                    ?cinematographerArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+            }
+            OPTIONAL {
+                ?item wdt:P1040 ?editor .
+                ?editor rdfs:label ?editorLabel .
+                FILTER(LANG(?editorLabel) = "en")
+                OPTIONAL {
+                    ?editor ^schema:about ?editorArticle .
+                    ?editorArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+            }
+            OPTIONAL {
+                ?item wdt:P86 ?composer .
+                ?composer rdfs:label ?composerLabel .
+                FILTER(LANG(?composerLabel) = "en")
+                OPTIONAL {
+                    ?composer ^schema:about ?composerArticle .
+                    ?composerArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+            }
             OPTIONAL { ?item wdt:P345 ?imdbId . }
             OPTIONAL { ?item wdt:P4947 ?tmdbId . }
             OPTIONAL { ?item wdt:P12196 ?tvdbId . }
             OPTIONAL { ?item wdt:P1258 ?rottenTomatoesId . }
+            OPTIONAL { ?item wdt:P6127 ?leterboxdId . }
+            OPTIONAL { ?item wdt:P1712 ?metacriticId . }
 		}
 	}"""
 )
+
+DETAIL_STAR_Q = prepareQuery(
+    DETAIL_NAMESPACES + """
+    SELECT * WHERE {
+        ?s v:hasFilmCrew ?starCast .
+        ?starCast v:hasRole v:Star .
+        ?starCast v:filmCrew ?starCastCast .
+        ?starCastCast rdfs:label ?starCastName .
+    }
+    """
+)
+
         
 DETAIL_IMDB_RATING_Q = prepareQuery(
     DETAIL_NAMESPACES + """
@@ -349,13 +390,67 @@ DETAIL_DBPEDIA_Q = prepareQuery(
     """
 )
 
+DETAIL_COMPANY_Q = prepareQuery(
+    DETAIL_NAMESPACES + """ 
+    SELECT * WHERE {
+		?s v:hasWikidata ?item .
+		SERVICE <https://query.wikidata.org/sparql> {
+            OPTIONAL {
+                ?item wdt:P272 ?productionCompany .
+                ?productionCompany rdfs:label ?productionCompanyLabel .
+                FILTER(LANG(?productionCompanyLabel) = "en")
+                OPTIONAL {
+                    ?productionCompany ^schema:about ?productionCompanyArticle .
+                    ?productionCompanyArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+            }
+            OPTIONAL {
+                ?item wdt:P750 ?distributor .
+                ?distributor rdfs:label ?distributorLabel .
+                FILTER(LANG(?distributorLabel) = "en")
+                OPTIONAL {
+                    ?distributor ^schema:about ?distributorArticle .
+                    ?distributorArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+            }
+		}
+	}"""
+)
+
+DETAIL_STREAMING_Q = prepareQuery(
+    DETAIL_NAMESPACES + """
+    SELECT * WHERE {
+        ?s v:hasWikidata ?item .
+        SERVICE <https://query.wikidata.org/sparql> {
+            OPTIONAL { ?item wdt:P1874 ?netflixId . }
+            OPTIONAL { ?item wdt:P5749 ?amazonId . }
+            OPTIONAL { ?item wdt:P9586 ?appleTvId . }
+            OPTIONAL { ?item wdt:P6562 ?googlePlayId . }
+            OPTIONAL { ?item wdt:P5990 ?moviesAnywhereId . }
+            OPTIONAL { ?item wdt:P1651 ?youtubeId . }
+            OPTIONAL { ?item wdt:P7595 ?disneyPlus . }
+            OPTIONAL { ?item wdt:P11460 ?plexId . }
+            OPTIONAL { ?item wdt:P8298 ?hboMaxId . }
+            OPTIONAL { ?item wdt:P6466 ?huluId . }
+            OPTIONAL { ?item wdt:P7970 ?fandangoNowId . }
+        }
+    }
+    """
+)
+
 GROUPED_VARS = [
     ('country', 'countryLabel', 'countryArticle', 'countryArticleName'),
     ('originalLanguage', 'originalLanguageLabel', 'originalLanguageArticle', 'originalLanguageArticleName'),
     ('director', 'directorLabel', 'directorArticle', 'directorArticleName', 'directorImage'),
     ('screenwriter', 'screenwriterLabel', 'screenwriterArticle', 'screenwriterArticleName', 'screenwriterImage'),
     ('producer', 'producerLabel', 'producerArticle', 'producerArticleName', 'producerImage'),
-    ('cast', 'castLabel', 'castArticle', 'castArticleName', 'castCharacterLabel', 'castCharacterName', 'castImage')
+    ('cast', 'castLabel', 'castArticle', 'castArticleName', 'castCharacterLabel', 'castCharacterName', 'castImage'),
+    ('productionCompany', 'productionCompanyLabel', 'productionCompanyArticle', 'productionCompanyArticleName'),
+    ('distributor', 'distributorLabel', 'distributorArticle', 'distributorArticleName'),
+    ('cinematographer', 'cinematographerLabel', 'cinematographerArticle', 'cinematographerArticleName'),
+    ('editor', 'editorLabel', 'editorArticle', 'editorArticleName'),
+    ('composer', 'composerLabel', 'composerArticle', 'composerArticleName'),
+    ('starCast', 'starCastName', 'starCastCast'),
 ]
 
 GROUPED_VARS_FLAT = [var for group in GROUPED_VARS for var in group]
@@ -415,6 +510,27 @@ def movie_detail(request, id):
 
     print("Query 6 done.")
 
+    query_company_result = local_g.query(DETAIL_COMPANY_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+
+    initialize_result_data(result_data, query_company_result)
+    extract_and_group_results(result, result_data, query_company_result)
+
+    print("Query 7 done.")
+
+    query_star_result = local_g.query(DETAIL_STAR_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+
+    initialize_result_data(result_data, query_star_result)
+    extract_and_group_results(result, result_data, query_star_result)
+
+    print("Query 8 done.")
+
+    query_streaming_result = local_g.query(DETAIL_STREAMING_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+
+    initialize_result_data(result_data, query_streaming_result)
+    extract_and_group_results(result, result_data, query_streaming_result)
+
+    print("Query 9 done.")
+
     # Querying from DBpedia
     # ────────────────────────────────────────
 
@@ -431,8 +547,16 @@ def movie_detail(request, id):
     # Release year and date
 
     release_year = result.releasedYear
-    if result.releasedDate:
-        release_year = datetime.datetime.strptime(result.releasedDate, "%Y-%m-%d").year
+    if result.releaseDate:
+        release_year = datetime.datetime.strptime(result.releaseDate, "%Y-%m-%d").year
+
+    release_date = result.releaseDate
+    print(result_data)
+    print(release_date)
+    if release_date:
+        release_date = datetime.datetime.strptime(release_date, "%Y-%m-%d").strftime("%d %B %Y")
+    elif release_year:
+        release_date = str(release_year)
 
     # Runtime
 
@@ -526,19 +650,173 @@ def movie_detail(request, id):
 
     # Cast
 
-    cast = []
+    casts = []
 
     for cast_member in result_data['cast']:
         cast_data = result_data['cast'][cast_member]
-        cast.append({
+        casts.append({
             'label': cast_data['castLabel'],
             'url': cast_data['castArticle'],
             'role': cast_data['castCharacterLabel'] or cast_data['castCharacterName'],
             'img': cast_data['castImage']
         })
 
+    # Production company
+
+    production_companies = []
+
+    for production_company in result_data['productionCompany']:
+        production_company_data = result_data['productionCompany'][production_company]
+        production_companies.append({
+            'label': production_company_data['productionCompanyLabel'],
+            'url': production_company_data['productionCompanyArticle']
+        })
+
+    # Distributor
+
+    distributors = []
+
+    for distributor in result_data['distributor']:
+        distributor_data = result_data['distributor'][distributor]
+        distributors.append({
+            'label': distributor_data['distributorLabel'],
+            'url': distributor_data['distributorArticle']
+        })
+
+    # Cinematorgrapher
+
+    cinematographers = []
+
+    for cinematographer in result_data['cinematographer']:
+        cinematographer_data = result_data['cinematographer'][cinematographer]
+        cinematographers.append({
+            'label': cinematographer_data['cinematographerLabel'],
+            'url': cinematographer_data['cinematographerArticle']
+        })
+
+    # Editor
+
+    editors = []
+
+    for editor in result_data['editor']:
+        editor_data = result_data['editor'][editor]
+        editors.append({
+            'label': editor_data['editorLabel'],
+            'url': editor_data['editorArticle']
+        })
+
+    # Composer
+
+    composers = []
+
+    for composer in result_data['composer']:
+        composer_data = result_data['composer'][composer]
+        composers.append({
+            'label': composer_data['composerLabel'],
+            'url': composer_data['composerArticle']
+        })
+
+    star_casts = []
+
+    if 'starCast' in result_data:
+        for star_cast in result_data['starCast']:
+            star_cast_data = result_data['starCast'][star_cast]
+            cast_data_in_wdb = next((cast_data for cast_data in casts if cast_data['label'] == star_cast_data['starCastName']), None)
+            star_casts.append({
+                'label': star_cast_data['starCastName'],
+                'url': cast_data_in_wdb.get('url') if cast_data_in_wdb else None,
+            })
+
     # Compiling infobox data
     # ────────────────────────────────────────
+
+    print(result_data.get('disneyPlus'))
+
+    streaming_data = [
+        {
+            'label': 'Netflix',
+            'urls': ['https://www.netflix.com/title/' + str(x) for x in result_data['netflixId']] if next(filter(lambda x: x, result_data.get('netflixId')), None) else [],
+            'icon': 'simple-icons:netflix',
+            'color': '#E50914',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Amazon Prime Video',
+            'id': result_data['amazonId'],
+            'urls': ['https://www.amazon.com/dp/' + x for x in result_data['amazonId']] if next(filter(lambda x: x, result_data.get('amazonId')), None) else [],
+            'icon': 'simple-icons:primevideo',
+            'color': '#1F2E3E',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Apple TV',
+            'id': result_data['appleTvId'],
+            'urls': ['https://tv.apple.com/movie/' + x for x in result_data['appleTvId']] if next(filter(lambda x: x, result_data.get('appleTvId')), None) else [],
+            'icon': 'simple-icons:appletv',
+            'color': '#000000',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Google Play Movies',
+            'id': result_data['googlePlayId'],
+            'urls': ['https://play.google.com/store/movies/details?id=' + x for x in result_data['googlePlayId']] if next(filter(lambda x: x, result_data.get('googlePlayId')), None) else [],
+            'icon': 'simple-icons:googleplay',
+            'color': '#414141',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Movies Anywhere',
+            'id': result_data['moviesAnywhereId'],
+            'urls': ['https://moviesanywhere.com/movie/' + x for x in result_data['moviesAnywhereId']] if next(filter(lambda x: x, result_data.get('moviesAnywhereId')), None) else [],
+            'color': '#FFFFFF',
+            'theme': 'light'
+        },
+        {
+            'label': 'YouTube',
+            'id': result_data['youtubeId'],
+            'urls': ['https://www.youtube.com/watch?v=' + x for x in result_data['youtubeId']] if next(filter(lambda x: x, result_data.get('youtubeId')), None) else [],
+            'icon': 'simple-icons:youtube',
+            'color': '#FF0000',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Disney+',
+            'id': result_data['disneyPlus'],
+            'urls': ['https://www.disneyplus.com/movies/wd/' + str(x) for x in result_data['disneyPlus']] if next(filter(lambda x: x, result_data.get('disneyPlus')), None) else [],
+            'color': '#176678',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Plex',
+            'id': result_data['plexId'],
+            'urls': ['https://app.plex.tv/desktop/#!/provider/tv.plex.provider.metadata/details?key=/library/metadata/' + x for x in result_data['plexId']] if next(filter(lambda x: x, result_data.get('plexId')), None) else [],
+            'icon': 'simple-icons:plex',
+            'color': '#EBAF00',
+            'theme': 'light'
+        },
+        {
+            'label': 'Max',
+            'id': result_data['hboMaxId'],
+            'urls': ['https://play.max.com/show/' + str(x) for x in result_data['hboMaxId']] if next(filter(lambda x: x, result_data.get('hboMaxId')), None) else [],
+            'icon': 'simple-icons:hbo',
+            'color': '#000000',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Hulu',
+            'id': result_data['huluId'],
+            'urls': ['https://www.hulu.com/movie/' + str(x) for x in result_data['huluId']] if next(filter(lambda x: x, result_data.get('huluId')), None) else [],
+            'color': '#3bb53b',
+            'theme': 'dark'
+        },
+        {
+            'label': 'Fandango Now',
+            'id': result_data['fandangoNowId'],
+            'urls': ['https://www.fandangonow.com/details/' + x for x in result_data['fandangoNowId']] if next(filter(lambda x: x, result_data.get('fandangoNowId')), None) else [],
+            'color': '#000000',
+            'theme': 'dark'
+        }
+    ]
 
     cast_data = [
         {
@@ -554,8 +832,20 @@ def movie_detail(request, id):
             'data': producers
         },
         {
+            'label': 'Cinematorgrapher',
+            'data': cinematographers
+        },
+        {
+            'label': 'Editor',
+            'data': editors
+        },
+        {
+            'label': 'Composer',
+            'data': composers
+        },
+        {
             'label': 'Cast',
-            'data': cast
+            'data': casts
         }
     ]
 
@@ -567,13 +857,13 @@ def movie_detail(request, id):
 
     if directors:
         infobox_data.append({
-            'label': 'Director',
+            'label': 'Directed by',
             'data': directors
         })
 
     if screenwriters:
         infobox_data.append({
-            'label': 'Screenwriter',
+            'label': 'Screenplay by',
             'data': screenwriters
         })
 
@@ -583,10 +873,46 @@ def movie_detail(request, id):
             'data': producers
         })
 
-    if result.releasedDate or release_year:
+    if star_casts:
+        infobox_data.append({
+            'label': 'Starring',
+            'data': star_casts
+        })
+
+    if cinematographers:
+        infobox_data.append({
+            'label': 'Cinematography',
+            'data': cinematographers
+        })
+
+    if editors:
+        infobox_data.append({
+            'label': 'Edited by',
+            'data': editors
+        })
+
+    if composers:
+        infobox_data.append({
+            'label': 'Music by',
+            'data': composers
+        })
+
+    if production_companies:
+        infobox_data.append({
+            'label': 'Production company',
+            'data': production_companies
+        })
+
+    if distributors:
+        infobox_data.append({
+            'label': 'Distributed by',
+            'data': distributors
+        })
+
+    if release_date:
         infobox_data.append({
             'label': 'Release date',
-            'data': result.releasedDate or release_year
+            'data': release_date
         })
 
     if runtime:
@@ -637,10 +963,10 @@ def movie_detail(request, id):
             'data': '$' + humanize.intword(result.internationalSales)
         })
 
-    if result.worldWideSales:
+    if result.worldWideSales or result.gross:
         infobox_data.append({
             'label': 'Worldwide sales',
-            'data': '$' + humanize.intword(result.worldWideSales)
+            'data': '$' + humanize.intword(result.worldWideSales or result.gross)
         })
 
 
@@ -684,6 +1010,20 @@ def movie_detail(request, id):
             'url': f"https://www.rottentomatoes.com/{result.rottenTomatoesId}"
         })
 
+    if result.leterboxdId:
+        infobox_links.append({
+            'icon': 'simple-icons:letterboxd',
+            'label': 'Letterboxd',
+            'url': f"https://letterboxd.com/film/{result.leterboxdId}"
+        })
+
+    if result.metacriticId:
+        infobox_links.append({
+            'icon': 'simple-icons:metacritic',
+            'label': 'Metacritic',
+            'url': f"https://www.metacritic.com/movie/{result.metacriticId}"
+        })
+
     context = {
         'movie_id': id,
         'movie_name': result.itemLabel or result.label,
@@ -698,9 +1038,11 @@ def movie_detail(request, id):
             'imdb_votes': str(result_data.get('imdbVotes', '')),
             'meta_score': str(result_data.get('metaScore', [''])[0])
         },
+        'genre': result.genre.split(',') if result.genre else [],
         'infobox_data': infobox_data,
         'infobox_links': infobox_links,
         'cast_data': cast_data,
+        'streaming_data': streaming_data,
         'result': result
     }
 
