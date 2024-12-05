@@ -125,7 +125,7 @@
                     No results found for "{{search_query}}", try another search.
                 {% endif %}
             </h3>
-            <a href="#" data-toggle="modal" data-target="#advanced-search">Advanced Search...</a>
+            <a href="#" data-toggle="modal" data-target="#advanced-search" onclick="buildAdvancedSearchModal('{{ search_query }}', '{{ search_type }}', '{{ sort_type }}')">Advanced Search...</a>
         </div>
         {% if results %}
         <div class="modal fade" id="advanced-search" tabindex="-1" role="dialog" aria-labelledby="advanced-search-label" aria-hidden="true">
@@ -138,54 +138,7 @@
                 </button>
                 </div>
                 <form action="{% url 'gmdb:search_movies' %}">
-                    <div class="modal-body">
-                        <div class="form-group mb-4">
-                            <h6 for="advancedQueryInput">Search Query</h6>
-                            <input type="search" class="form-control" name="q" id="advancedQueryInput" placeholder="Insert query here..." value="{{search_query}}">
-                        </div>
-                        <div class="form-group mb-4">
-                            <h6>Search Type</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="searchBy" id="searchBy1" value="title" checked>
-                                <label class="form-check-label" for="searchBy1">
-                                    Title
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="searchBy" id="searchBy2" value="extended">
-                                <label class="form-check-label" for="searchBy2">
-                                    Extended
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <h6>Sort By</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy1" value="title" checked>
-                                <label class="form-check-label" for="sortBy1">
-                                    Title
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy2" value="rating">
-                                <label class="form-check-label" for="sortBy2">
-                                    Highest Rating
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy3" value="newest">
-                                <label class="form-check-label" for="sortBy3">
-                                    Newest Released
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="sortBy" id="sortBy4" value="oldest">
-                                <label class="form-check-label" for="sortBy4">
-                                    Oldest Released
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="advanced-search-form" class="modal-body"></div>
                     <div class="modal-footer">
                     <button type="submit" class="btn btn-secondary">Search</button>
                     </div>
@@ -193,6 +146,57 @@
             </div>
             </div>
         </div>
+        <script>
+            function buildAdvancedSearchModal(search_query, search_type, sort_type) {
+                document.getElementById('advanced-search-form').innerHTML = `
+                <div class="form-group mb-4">
+                    <h6 for="advancedQueryInput">Search Query</h6>
+                    <input type="search" class="form-control" name="q" id="advancedQueryInput" placeholder="Insert query here..." value="{{search_query}}">
+                </div>
+                <div class="form-group mb-4">
+                    <h6>Search Type</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="searchBy" id="searchBy1" value="title" ${(search_type == "title") ? "checked" : ""}>
+                        <label class="form-check-label" for="searchBy1">
+                            Title
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="searchBy" id="searchBy2" value="extended" ${(search_type == "extended") ? "checked" : ""}>
+                        <label class="form-check-label" for="searchBy2">
+                            Extended
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <h6>Sort By</h6>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sortBy" id="sortBy1" value="title" ${(sort_type == "title") ? "checked" : ""}>
+                         <label class="form-check-label" for="sortBy1">
+                            Title
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sortBy" id="sortBy2" value="rating" ${(sort_type == "rating") ? "checked" : ""}>
+                        <label class="form-check-label" for="sortBy2">
+                            Highest Rating
+                        </label>
+                    </div>
+                    <div class="form-check">
+                         <input class="form-check-input" type="radio" name="sortBy" id="sortBy3" value="newest" ${(sort_type == "newest") ? "checked" : ""}>
+                        <label class="form-check-label" for="sortBy3">
+                            Newest Released
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="sortBy" id="sortBy4" value="oldest" ${(sort_type == "oldest") ? "checked" : ""}>
+                        <label class="form-check-label" for="sortBy4">
+                            Oldest Released
+                        </label>
+                    </div>
+                </div>`;
+            }
+        </script>
         <div class="grid-wrapper-container">
             <div class="grid-wrapper">
                 {% for item in results %}

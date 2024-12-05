@@ -147,15 +147,25 @@ def search_movies(request):
 
     context = {
         'search_query': search_args.get('search_query'),
+        'search_type': search_args.get('search_type'),
+        'sort_type': search_args.get('sort_type'),
         'results': results
     }
 
     return render(request, "search.html", context)
 
+search_types = ["title", "extended"]
+sort_types = ["title", "rating", "oldest", "newest"]
+
 def build_search_args(request_data):
     search_query = request_data.get("q")
     search_type = request_data.get("searchBy")
     sort_type = request_data.get("sortBy")
+
+    if not search_type or search_type not in search_types:
+        search_type = "title"
+    if not sort_type or sort_type not in sort_types:
+        sort_type = "title"
 
     if search_type == "extended":
         search_filter = f"FILTER ( CONTAINS(lcase(?movieName), \"{search_query.lower()}\") || CONTAINS(lcase(?overview), \"{search_query.lower()}\") )"
@@ -173,6 +183,8 @@ def build_search_args(request_data):
     
     return {
         'search_query': search_query,
+        'search_type': search_type,
+        'sort_type': sort_type,
         'search_filter': search_filter,
         'sort_filter': sort_filter
     }
