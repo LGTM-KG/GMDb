@@ -3,79 +3,38 @@
 {% load isinstance %}
 
 {% block meta %}
-<title>{{ movie_name }}</title>
+<title>{{ movie_name }} — GMDb</title>
 {% endblock meta %}
 
 {% block content %}
 
-<style>
-    .infobox {
-        display: flex;
-        flex-direction: column;
-        float: right;
-        clear: right;
-        margin-left: 1rem;
-        background-color: rgba(255, 255, 255, 0.2);;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        border-radius: .3rem;
-        font-size: 85%;
-        width: 22rem;
-        padding: 0.25rem;
-    }
-
-    .infobox table {
-        width: 100%;
-        margin-bottom: 0;
-        border-spacing: 0.25rem;
-        border-collapse: separate;
-    }
-
-    .infobox table ul,
-    .infobox table ol {
-        margin-bottom: 0;
-        padding-left: 0.675rem;
-    }
-
-    .infobox table tr {
-        margin-bottom: 0.5rem;
-    }
-
-    .infobox table td {
-        vertical-align: top;
-    }
-
-    .infobox>* {
-        margin-bottom: 0.5rem;
-    }
-
-    .infobox>*:last-child {
-        margin-bottom: 0;
-    }
-
-    .infobox-img {
-        width: 100%;
-    }
-
-    .infobox-name {
-        font-weight: bold;
-        text-align: center;
-    }
-
-    .infobox-label {
-        font-weight: bold;
-    }
-
-    .infobox-data:only-child {
-        text-align: center;
-    }
-</style>
-
 <body>
     {% include 'header.html' %}
     <div class="container my-4">
-        <h1>{{ movie_name }}</h1>
-        <p>{{ release_year }} · {{ certification }} · {{ runtime.text }}</p>
-        <p>{{ overview }}</p>
+        <div class="movie-header">
+            <div class="movie-header-title">
+                <h1>{{ movie_name }}</h1>
+                <p>{{ release_year }} · {{ certification }} · {{ runtime.text }}</p>
+            </div>
+            <div class="movie-header-overview">
+                <p>{{ overview }}</p>
+            </div>
+            <div class="movie-header-rating">
+                {% if rating.imdb_rating %}
+                    <div>
+                        <p class="movie-header-rating-source">IMDb</p>
+                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.imdb_rating }}</p>
+                        <p class="movie-header-rating-sub">from {{ rating.imdb_votes }} votes</p>
+                    </div>
+                {% endif %}
+                {% if rating.meta_score %}
+                    <div>
+                        <p class="movie-header-rating-source">Meta</p>
+                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.meta_score }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
 
         <div class="infobox">
             <table class="unstyled">
@@ -88,12 +47,12 @@
 
                     {% if poster %}
                     <tr>
-                        <td colspan="2">
-                            <img src="{{ poster }}" alt="Movie Poster" class="infobox-img">
+                        <td colspan="2" class="infobox-img-parent">
+                            <img src="{{ poster }}" alt="Movie poster" class="infobox-img">
                         </td>
                     </tr>
                     {% endif %}
-                    
+
                     {% for entry in infobox_data %}
 
                     <tr>
@@ -105,21 +64,21 @@
                                         {% if entry.data.0|isinstance:"dict" %}
                                             <a href="{{ entry.data.0.url }}" rel="noopener" target="_blank">{{ entry.data.0.label }}</a>
                                         {% else %}
-                                            {{ item }}
+                                            {{ entry.data.0 }}
                                         {% endif %}
                                     {% else %}
-                                        <ul>
-                                            {% for item in entry.data %}
-                                                {% if item|isinstance:"dict" %}
-                                                    <li>
-                                                        <a href="{{ item.url }}" rel="noopener" target="_blank">{{ item.label }}</a>
-                                                    </li>
-                                                {% else %}
-                                                    <li>{{ item }}</li>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
+                                <ul>
+                                    {% for item in entry.data %}
+                                        {% if item|isinstance:"dict" %}
+                                            <li>
+                                                <a href="{{ item.url }}" rel="noopener" target="_blank">{{ item.label }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li>{{ item }}</li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
                                 {% else %}
                                     {% if entry.data|isinstance:"dict" %}
                                         <a href="{{ entry.data.url }}" rel="noopener" target="_blank">{{ entry.data.label }}</a>
@@ -154,8 +113,40 @@
             </table>
         </div>
 
-        <h2>Wikipedia</h2>
+        <h2>Abstract</h2>
         <p>{{ abstract }}</p>
+
+        <h2>Cast and crew</h2>
+
+        {% for cast_section in cast_data %}
+
+        <h3 class="mb-3">{{ cast_section.label }}</h3>
+
+        <div class="cast-grid mb-4">
+            {% for cast in cast_section.data %}
+            <div>
+                <div class="card h-100">
+                    <div class="row no-gutters">
+                        {% if cast.img and cast.img != None %}
+                            <div class="col-12 col-md-4">
+                                <img src="{{ cast.img }}" class="cast-img" alt="">
+                            </div>
+                        {% endif %}
+                        <div class="col-12 {% if cast.img %}col-md-8{% endif %}">
+                            <div class="card-body">
+                                <h5 class="card-title {% if not cast.role %}mb-0{% endif %}">{% if cast.url %}<a href="{{ cast.url }}">{% endif %}{{ cast.label }}{% if cast.url %}</a>{% endif %}</h5>
+                                {% if cast.role %}
+                                    <p class="card-text">{{ cast.role }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% endfor %}
 
         <!-- 
 
@@ -176,8 +167,8 @@
             </div>
         </div> -->
 
-        <h2>Query result</h2>
-        <pre class="text-wrap">{{ result }}</pre>
+        <!-- <h2>Query result</h2>
+        <pre class="text-wrap">{{ result }}</pre> -->
     </div>
 </body>
 {% endblock content%}
