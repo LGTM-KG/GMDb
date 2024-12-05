@@ -19,25 +19,48 @@ PREFIX wd: <http://www.wikidata.org/entity/>
 PREFIX schema: <http://schema.org/>
 """
 
+def query_home_page(query_str, *args):
+    returned_data = []
+    q_data = local_g.query(INITIAL_NAMESPACES + query_str, *args)
+    for row in q_data:
+        poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
+    
+        data = {
+            "id": str(row.s).split('http://example.com/data/')[1],
+            "entity_url": str(row.s),
+            "movieName": str(row.movieName),      
+            "poster": poster_url,
+        }
+
+        returned_data.append(data)
+    return returned_data
+
 def query_search(query_str, *args):
     returned_data = []
     q_data = local_g.query(INITIAL_NAMESPACES + query_str, *args)
     for row in q_data:
         poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
-        id = str(row.s)
-        print(1, id)
+        runtime = int(row.runtime)
+        directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
+        directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
+    
         data = {
             "id": str(row.s).split('http://example.com/data/')[1],
             "entity_url": str(row.s),
             "movieName": str(row.movieName),      
-            "poster": poster_url,    
+            "poster": poster_url,
+            "imdbRating": str(row.imdbRating),
+            "runtime": f"{runtime // 60} h {runtime % 60} m",
+            "releasedYear": str(row.releasedYear),
+            "directorLabel": directorLabel,
+            "directorUrl": f"https://dbpedia.org/resource/{directorUrl}"
         }
 
         returned_data.append(data)
     return returned_data
 
 def query_genre(genre):
-    return query_search("""
+    return query_home_page("""
     SELECT ?s ?movieName ?poster where {
         ?s rdfs:label ?movieName ;
         v:poster ?poster ;
@@ -50,7 +73,7 @@ def query_genre(genre):
 # Create your views here.
 def home_page(request):
     # Top 20 Highest Rating Movies
-    top_20_rating_list = query_search("""
+    top_20_rating_list = query_home_page("""
     SELECT ?s ?movieName ?poster where {
         ?s rdfs:label ?movieName ;
         v:poster ?poster .
@@ -58,7 +81,7 @@ def home_page(request):
     """)
 
     # Top 20 Highest Grossing Movies
-    top_20_grossing_list = query_search("""
+    top_20_grossing_list = query_home_page("""
     SELECT ?s ?movieName ?poster ?worldWideSales WHERE {
         ?s rdfs:label ?movieName ;
         v:worldWideSales ?worldWideSales ;
@@ -97,24 +120,62 @@ def home_page(request):
     return render(request, "home.html", context)
 
 def search_movies(request):
-    search_query = request.GET.get("q")
+    search_args = build_search_args(request.GET)
 
-    results = query_search("""
-    SELECT DISTINCT ?s ?movieName ?poster where {
-        ?s rdfs:label ?movieName ;
-            v:poster ?poster ;
-            v:genre ?genre .
-
-    FILTER CONTAINS(lcase(?movieName),\"""" + search_query.lower() + """\")
-    }
-    """)
+    if request.GET.get("q"):
+        results = query_search("""
+        SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
+            ?s rdfs:label ?movieName ;
+                v:releasedYear ?releasedYear ;
+                v:runtime ?runtime ;
+                v:overview ?overview ;
+                v:hasFilmCrew [
+                    v:hasRole v:Director ;
+                    v:filmCrew ?director
+                ] .
+                OPTIONAL { ?s v:poster ?poster }
+                OPTIONAL { ?s v:imdbScore ?imdbNode.
+                ?imdbNode v:rating ?imdbRating. }
+        """ + search_args.get('search_filter') + """
+        }
+        GROUP BY ?movieName
+        """ + search_args.get('sort_filter'))
+    else:
+        results = []
+        
+    print(results)
 
     context = {
-        'search_query': search_query,
+        'search_query': search_args.get('search_query'),
         'results': results
     }
 
     return render(request, "search.html", context)
+
+def build_search_args(request_data):
+    search_query = request_data.get("q")
+    search_type = request_data.get("searchBy")
+    sort_type = request_data.get("sortBy")
+
+    if search_type == "extended":
+        search_filter = f"FILTER ( CONTAINS(lcase(?movieName), \"{search_query.lower()}\") || CONTAINS(lcase(?overview), \"{search_query.lower()}\") )"
+    else:
+        search_filter = f"FILTER CONTAINS(lcase(?movieName), \"{search_query.lower()}\")"
+
+    if sort_type == "rating":
+        sort_filter = "ORDER BY DESC(?imdbRating)"
+    elif sort_type == "oldest":
+        sort_filter = "ORDER BY ASC(?releasedYear)"
+    elif sort_type == "newest":
+        sort_filter = "ORDER BY DESC(?releasedYear)"
+    else:
+        sort_filter = "ORDER BY ASC(?movieName)"
+    
+    return {
+        'search_query': search_query,
+        'search_filter': search_filter,
+        'sort_filter': sort_filter
+    }
 
 DETAIL_NAMESPACES = INITIAL_NAMESPACES + """
     PREFIX wikibase: <http://wikiba.se/ontology#>
