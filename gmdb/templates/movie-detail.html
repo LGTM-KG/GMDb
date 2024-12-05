@@ -5,3 +5,30 @@
 <title>Nama Film</title>
 {% endblock meta %}
 
+{% block content %}
+<body>
+    <div class="container mt-5">
+        <div class="mb-3">
+            <span onclick="history.back()" style="font-size:20px; cursor: pointer;">&#8592; Go Back</span>
+        </div>
+
+        <div class="card">
+            <div class="row g-0">
+                <div class="col-md-6">
+                    <img src="#" class="img-fluid rounded-start" alt="Movie Poster">
+                </div>
+                <div class="col-md-6">
+                    <div class="card-body">
+                        <h5 class="card-title">Movie Title</h5>
+                        <p class="card-text"><strong>Release Date:</strong> January 1, 2023</p>
+                        <p class="card-text"><strong>Director:</strong> John Doe</p>
+                        <p class="card-text"><strong>Genre:</strong> Action, Drama</p>
+                        <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur a felis et velit facilisis eleifend.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock content%}
+

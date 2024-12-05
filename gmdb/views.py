@@ -102,3 +102,6 @@ def search_movies(request):
     }
 
     return render(request, "search.html", context)
+
+def movie_detail(request, name):
+    return render(request, "movie-detail.html")
