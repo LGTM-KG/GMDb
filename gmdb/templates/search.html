@@ -126,7 +126,7 @@
         <div class="grid-wrapper-container">
             <div class="grid-wrapper">
                 {% for item in results %}
-                <div class="item card" onclick="showInfo('{{ item.movieName }}', '{{ item.poster }}', '{{ item.overview }}', '{{ item.director }}', '{{ item.releasedYear }}', '{{ item.imdbScore }}', '{{ item.runtime }}')">
+                <div class="item card" onclick="showInfo('{{ item.movieName|escapejs }}', '{{ item.poster|escapejs }}', '{{ item.overview|escapejs }}', '{{ item.directorLabel|escapejs }}', '{{ item.imdbRating|escapejs }}', '{{ item.runtime|escapejs }}', '{{ item.releasedYear|escapejs }}')">
                     <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}"/>
                 </div>
                 {% endfor %}
@@ -148,17 +148,17 @@
     </div>
 
     <script>
-        function showInfo(title, poster, overview, director, year, score, runtime) {
+        function showInfo(title, poster, overview, director, imdbRating, runtime, releasedYear) {
             document.getElementById('movie-title').textContent = title;
-            document.getElementById('sidebar-poster').src = poster;
+            document.getElementById('sidebar-poster').src = poster || 'default_poster.jpg'; // Fallback for missing poster
             document.getElementById('movie-overview').textContent = overview;
             document.getElementById('movie-info').innerHTML = `
-                <strong>Director:</strong> ${director}<br>
-                <strong>Release Year:</strong> ${year}<br>
-                <strong>IMDb Score:</strong> ${score}<br>
-                <strong>Runtime:</strong> ${runtime} minutes
+                <strong>Director:</strong> ${director || 'Unknown'}<br>
+                <strong>IMDb Rating:</strong> ${imdbRating || 'N/A'}<br>
+                <strong>Runtime:</strong> ${runtime} minutes<br>
+                <strong>Release Year:</strong> ${releasedYear || 'Unknown'}
             `;
-    
+
             document.getElementById('info-box').classList.add('active');
         }
     
