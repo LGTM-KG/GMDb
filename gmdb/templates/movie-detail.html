@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load isinstance %}
 
 {% block meta %}
 <title>{{ movie_name }}</title>
@@ -98,7 +99,21 @@
                         <td class="infobox-label">{{ entry.label }}</td>
                         <td class="infobox-data">
                             {% if entry.data %}
-                                {{ entry.data }}
+                                {% if entry.data|isinstance:"list" %}
+                                    <!-- if there is only 1 -->
+                                    {% if entry.data|length == 1 %}
+                                        {{ entry.data.0 }}
+                                    <!-- if there are multiple -->
+                                    {% else %}
+                                        <ul>
+                                            {% for item in entry.data %}
+                                            <li>{{ item }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                {% else %}
+                                    {{ entry.data }}
+                                {% endif %}
                             {% else %}
                                 <i>No information</i>
                             {% endif %}

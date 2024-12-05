@@ -116,6 +116,10 @@ def search_movies(request):
 
 detail_q = prepareQuery(
     INITIAL_NAMESPACES + """ 
+    PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX bd: <http://www.bigdata.com/rdf#>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+
     SELECT * WHERE {
 		?s rdfs:label ?label.
 		?s v:hasWikidata ?item .
@@ -133,17 +137,43 @@ detail_q = prepareQuery(
 			?item ^schema:about ?article .
 			?article schema:isPartOf <https://en.wikipedia.org/>.
 			?article schema:name ?articlename .
+            OPTIONAL { 
+                ?item wdt:P495 ?country .
+                ?country rdfs:label ?countryLabel .
+                FILTER(LANG(?countryLabel) = "en")
+            }
+            OPTIONAL { 
+                ?item wdt:P364 ?originalLanguage .
+                ?originalLanguage rdfs:label ?originalLanguageLabel .
+                FILTER(LANG(?originalLanguageLabel) = "en")
+            }
 		}
-	} LIMIT 1"""
+	}"""
 )
 
 def movie_detail(request, id):
     query_result = local_g.query(detail_q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
 
     print(len(query_result))
+    
+    result = None
+    result_data = {}
+    
+    for var in query_result.vars:
+        var_str = str(var)
+        result_data[var_str] = []
+    
     for row in query_result:
-        result = row
-        break
+        if result is None:
+            result = row
+        for index, value in enumerate(row):
+            key = query_result.vars[index]
+            key_str = str(key)
+            value_str = str(value)
+            if value_str not in result_data[key_str]:
+                result_data[key_str].append(value_str)
+
+    print(result, result_data)
 
     release_year = result.releasedYear
     if result.releasedDate:
@@ -170,7 +200,15 @@ def movie_detail(request, id):
         },
         {
             'label': 'Certification',
-            'data': str(result.certification)
+            'data': result.certification
+        },
+        {
+            'label': 'Country',
+            'data': result_data['countryLabel']
+        },
+        {
+            'label': 'Language',
+            'data': result_data['originalLanguageLabel']
         }
     ]
 
