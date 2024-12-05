@@ -73,8 +73,9 @@
 <body>
     {% include 'header.html' %}
     <div class="container my-4">
-        <h2>{{ movie_name }}</h2>
+        <h1>{{ movie_name }}</h1>
         <p>{{ release_year }} · {{ certification }} · {{ runtime.text }}</p>
+        <p>{{ overview }}</p>
 
         <div class="infobox">
             <table class="unstyled">
@@ -136,6 +137,10 @@
                 </tbody>
             </table>
         </div>
+
+        <h2>Wikipedia</h2>
+        <p>{{ wp_lead }}</p>
+
         <!-- 
 
         <div class="card">
@@ -154,6 +159,8 @@
                 </div>
             </div>
         </div> -->
+
+        <h2>Query result</h2>
         <pre class="text-wrap">{{ result }}</pre>
     </div>
 </body>

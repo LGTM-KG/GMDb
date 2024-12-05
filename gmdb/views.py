@@ -3,6 +3,7 @@ import rdflib
 from rdflib.plugins.sparql import prepareQuery
 import re
 import datetime
+import requests
 
 local_g = rdflib.Graph()
 local_g.parse('Integrated_Movies_Triples.ttl')
@@ -131,12 +132,13 @@ detail_q = prepareQuery(
         OPTIONAL { ?s v:releasedYear ?releasedYear . }
         OPTIONAL { ?s v:releasedDate ?releasedDate . }
         OPTIONAL { ?s v:certification ?certification . }
+        OPTIONAL { ?s v:overview ?overview . }
 		SERVICE <https://query.wikidata.org/sparql> {
 			?item rdfs:label ?itemLabel .
 			FILTER(LANG(?itemLabel) = "en")
 			?item ^schema:about ?article .
 			?article schema:isPartOf <https://en.wikipedia.org/>.
-			?article schema:name ?articlename .
+			?article schema:name ?articleName .
             OPTIONAL { 
                 ?item wdt:P495 ?country .
                 ?country rdfs:label ?countryLabel .
@@ -189,6 +191,16 @@ def movie_detail(request, id):
 
     poster = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(result.poster))
 
+    # wikipedia lead
+    wp_name = result_data['articleName'][0]
+    # wp_lead_response = requests.get(f"https://en.wikipedia.org/w/api.php?action=parse&format=json&prop=text&section=0&formatversion=2&page={wp_name}")
+    # wp_lead_data = wp_lead_response.json()
+    # wp_lead = wp_lead_data['parse']['text']
+    wp_lead_response = requests.get(f"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&formatversion=2&exsentences=10&exlimit=1&explaintext=1&exsectionformat=wiki&titles={wp_name}")
+    wp_lead_data = wp_lead_response.json()
+    wp_lead = wp_lead_data['query']['pages'][0]['extract']
+
+
     infobox_data = [
         {
             'label': 'Release date',
@@ -223,7 +235,7 @@ def movie_detail(request, id):
         }
     ]
 
-    print(infobox_data)
+    print(result.overview)
 
     context = {
         'movie_id': id,
@@ -232,9 +244,11 @@ def movie_detail(request, id):
         'runtime': runtime,
         'certification': result.certification,
         'poster': poster,
+        'wp_lead': wp_lead,
+        'overview': result.overview,
+
         'infobox_data': infobox_data,
         'infobox_links': infobox_links,
-
         'result': result
     }
 
