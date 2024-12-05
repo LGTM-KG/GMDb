@@ -116,3 +116,23 @@ body {
 	grid-row: 2;
 	grid-column-start: span 2
 }
+
+@media (max-width: 767.98px) {
+	.movie-header {
+		grid-template-columns: 1fr;
+	}
+
+	.movie-header-rating {
+		grid-row: 3;
+		grid-column: 1;
+	}
+
+	.movie-header-overview {
+		grid-row: 2;
+		grid-column: 1;
+	}
+}
+
+iconify-icon {
+	vertical-align: -0.125rem;
+}
