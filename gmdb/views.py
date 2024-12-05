@@ -40,6 +40,9 @@ def query_search(query_str, *args):
     for row in q_data:
         poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
         runtime = int(row.runtime)
+        directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
+        directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
+        print(directorUrl)
     
         data = {
             "id": str(row.s).split('http://example.com/data/')[1],
@@ -48,7 +51,9 @@ def query_search(query_str, *args):
             "poster": poster_url,
             "imdbRating": str(row.imdbRating),
             "runtime": f"{runtime // 60} h {runtime % 60} m",
-            "releasedYear": int(row.releasedYear)
+            "releasedYear": str(row.releasedYear),
+            "directorLabel": directorLabel,
+            "directorUrl": f"https://dbpedia.org/resource/{directorUrl}"
         }
 
         returned_data.append(data)
@@ -118,11 +123,15 @@ def search_movies(request):
     search_query = request.GET.get("q")
 
     results = query_search("""
-    SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear where {
+    SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
         ?s rdfs:label ?movieName ;
             v:releasedYear ?releasedYear ;
             v:runtime ?runtime ;
-            v:overview ?overview .
+            v:overview ?overview ;
+            v:hasFilmCrew [
+                v:hasRole v:Director ;
+                v:filmCrew ?director
+            ] .
             OPTIONAL { ?s v:poster ?poster }
             OPTIONAL { ?s v:imdbScore ?imdbNode.
                ?imdbNode v:rating ?imdbRating. }

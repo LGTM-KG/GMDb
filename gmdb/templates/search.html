@@ -126,7 +126,7 @@
         <div class="grid-wrapper-container">
             <div class="grid-wrapper">
                 {% for item in results %}
-                <div class="item card" onclick="showInfo('{{ item.movieName|escapejs }}', '{{ item.poster|escapejs }}', '{{ item.overview|escapejs }}', '{{ item.directorLabel|escapejs }}', '{{ item.imdbRating|escapejs }}', '{{ item.runtime|escapejs }}', '{{ item.releasedYear|escapejs }}')">
+                <div class="item card" onclick="showInfo('{{ item.movieName|escapejs }}', '{{ item.poster|escapejs }}', '{{ item.overview|escapejs }}', '{{ item.directorLabel|escapejs }}', '{{ item.directorUrl|escapejs }}', '{{ item.imdbRating|escapejs }}', '{{ item.runtime|escapejs }}', '{{ item.releasedYear|escapejs }}')">
                     <img class="card-img-top rounded" src="{{ item.poster }}" alt="{{ item.movieName }}"/>
                 </div>
                 {% endfor %}
@@ -148,12 +148,12 @@
     </div>
 
     <script>
-        function showInfo(title, poster, overview, director, imdbRating, runtime, releasedYear) {
+        function showInfo(title, poster, overview, directorLabel, directorUrl, imdbRating, runtime, releasedYear) {
             document.getElementById('movie-title').textContent = title;
             document.getElementById('sidebar-poster').src = poster || 'default_poster.jpg'; // Fallback for missing poster
             document.getElementById('movie-overview').textContent = overview;
             document.getElementById('movie-info').innerHTML = `
-                <strong>Director:</strong> ${director || 'Unknown'}<br>
+                <strong>Director:</strong> <a href="${directorUrl}">${directorLabel || 'Unknown'}</a><br>
                 <strong>IMDb Rating:</strong> ${imdbRating || 'N/A'}<br>
                 <strong>Runtime:</strong> ${runtime}<br>
                 <strong>Release Year:</strong> ${releasedYear || 'Unknown'}
