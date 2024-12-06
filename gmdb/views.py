@@ -9,6 +9,11 @@ import humanize
 local_g = rdflib.Graph()
 local_g.parse('Integrated_Movies_Triples.ttl')
 
+sparql = SPARQLWrapper(
+    "http://localhost:7200/repositories/GMDb"
+)
+sparql.setReturnFormat(JSON)
+
 INITIAL_NAMESPACES = """
 PREFIX : <http://example.com/data/> 
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -21,14 +26,15 @@ PREFIX schema: <http://schema.org/>
 
 def query_home_page(query_str, *args):
     returned_data = []
-    q_data = local_g.query(INITIAL_NAMESPACES + query_str, *args)
-    for row in q_data:
-        poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
-    
+    sparql.setQuery(INITIAL_NAMESPACES + query_str)
+    q_data = sparql.query().convert()
+
+    for row in q_data['results']['bindings']:
+        poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', row['poster']['value'])
         data = {
-            "id": str(row.s).split('http://example.com/data/')[1],
-            "entity_url": str(row.s),
-            "movieName": str(row.movieName),      
+            "id": row['s']['value'].split('http://example.com/data/')[1],
+            "entity_url": row['s']['value'],
+            "movieName": row['movieName']['value'],      
             "poster": poster_url,
         }
 
@@ -37,25 +43,33 @@ def query_home_page(query_str, *args):
 
 def query_search(query_str, *args):
     returned_data = []
-    q_data = local_g.query(INITIAL_NAMESPACES + query_str, *args)
-    for row in q_data:
-        poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(row.poster))
-        runtime = int(row.runtime)
-        if row.director:
-            directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', str(row.director).split('http://example.com/data/')[1])
-            directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', str(row.director).split('http://example.com/data/')[1])
+    sparql.setQuery(INITIAL_NAMESPACES + query_str)
+    print(INITIAL_NAMESPACES + query_str)
+
+    q_data = sparql.query().convert()
+
+    for row in q_data['results']['bindings']:
+        print(row)
+        if 'poster' in row:
+            poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', row['poster']['value'])
+        else:
+            poster_url = None
+        runtime = int(row['runtime']['value'])
+        if 'director' in row:
+            directorLabel = re.sub(r'(?<!^)(?=[A-Z])', ' ', row['director']['value'].split('http://example.com/data/')[1])
+            directorUrl = re.sub(r'(?<!^)(?=[A-Z])', '_', row['director']['value'].split('http://example.com/data/')[1])
         else:
             directorLabel = "Unknown"
             directorUrl = "Unknown"
     
         data = {
-            "id": str(row.s).split('http://example.com/data/')[1],
-            "entity_url": str(row.s),
-            "movieName": str(row.movieName),      
+            "id": row['s']['value'].split('http://example.com/data/')[1],
+            "entity_url": row['s']['value'],
+            "movieName": row['movieName']['value'],      
             "poster": poster_url,
-            "imdbRating": str(row.imdbRating) if row.imdbRating else "N/A",
+            "imdbRating": row['imdbRating']['value'] if 'imdbRating' in row else "N/A",
             "runtime": f"{runtime // 60} h {runtime % 60} m",
-            "releasedYear": str(row.releasedYear),
+            "releasedYear": row['releasedYear']['value'],
             "directorLabel": directorLabel,
             "directorUrl": f"https://dbpedia.org/resource/{directorUrl}"
         }
@@ -142,7 +156,7 @@ def search_movies(request):
                 ?imdbNode v:rating ?imdbRating . }
         """ + search_args.get('search_filter') + """
         }
-        GROUP BY ?movieName
+        # GROUP BY ?movieName
         """ + search_args.get('sort_filter'))
     else:
         results = []

@@ -11,6 +11,7 @@ psycopg2-binary==2.9.10
 pyparsing==3.2.0
 rdflib==7.1.1
 requests==2.32.3
+sparqlwrapper==2.0.0
 sqlparse==0.5.2
 typing-extensions==4.12.2
 tzdata==2024.2
