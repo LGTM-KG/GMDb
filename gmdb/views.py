@@ -503,6 +503,7 @@ DETAIL_STREAMING_Q_STR = DETAIL_NAMESPACES + """
             OPTIONAL { ?item wdt:P8298 ?hboMaxId . }
             OPTIONAL { ?item wdt:P6466 ?huluId . }
             OPTIONAL { ?item wdt:P7970 ?fandangoNowId . }
+            OPTIONAL { ?item wdt:P5885 ?microsoftStoreId . }
         }
     }
     """
@@ -791,15 +792,13 @@ def movie_detail(request, id):
     # Compiling infobox data
     # ────────────────────────────────────────
 
-    print(result_data.get('disneyPlus'))
-
     streaming_data = []
 
     add_streaming_data('Amazon Prime Video', ['https://www.amazon.com/dp/' + x for x in result_data.get('amazonId', [])], 'simple-icons:primevideo', '#1F2E3E', 'dark', streaming_data=streaming_data)
     
     add_streaming_data('Apple TV', ['https://tv.apple.com/movie/' + x for x in result_data.get('appleTvId', [])], 'simple-icons:appletv', '#000000', 'dark', streaming_data=streaming_data)
     
-    add_streaming_data('Disney+', ['https://www.disneyplus.com/movies/wd/' + str(x) for x in result_data.get('disneyPlus', [])], None, '#176678', 'dark', streaming_data=streaming_data)
+    add_streaming_data('Disney+', ['https://www.disneyplus.com/movies/wd/' + str(x) for x in result_data.get('disneyPlus', [])], 'cbi:disney-plus', '#176678', 'dark', streaming_data=streaming_data)
     
     add_streaming_data('Fandango Now', ['https://www.fandangonow.com/details/' + x for x in result_data.get('fandangoNowId', [])], None, '#000000', 'dark', streaming_data=streaming_data)
     
@@ -808,6 +807,8 @@ def movie_detail(request, id):
     add_streaming_data('Hulu', ['https://www.hulu.com/movie/' + str(x) for x in result_data.get('huluId', [])], None, '#3bb53b', 'dark', streaming_data=streaming_data)
     
     add_streaming_data('Max', ['https://play.max.com/show/' + str(x) for x in result_data.get('hboMaxId', [])], 'simple-icons:hbo', '#000000', 'dark', streaming_data=streaming_data)
+
+    add_streaming_data('Microsoft Store', ['https://apps.microsoft.com/detail/' + x for x in result_data.get('microsoftStoreId', [])], 'simple-icons:microsoft', streaming_data=streaming_data)
     
     add_streaming_data('Movies Anywhere', ['https://moviesanywhere.com/movie/' + x for x in result_data.get('moviesAnywhereId', [])], streaming_data=streaming_data)
     
