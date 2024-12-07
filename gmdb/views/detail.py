@@ -6,8 +6,8 @@ import requests
 from django.shortcuts import render
 
 from gmdb.views import query_remote
-from gmdb.views.detail_queries import CREW_PROP_MAPPING, DETAIL_CREW_Q_STR, DETAIL_Q_STR, prepare_query_str,  DETAIL_STAR_Q_STR, DETAIL_IMDB_RATING_Q_STR, DETAIL_CAST_Q_STR, DETAIL_DBPEDIA_Q_STR, DETAIL_COMPANY_Q_STR, DETAIL_STREAMING_Q_STR, GROUPED_VARS
-from gmdb.views.detail_utils import add_infobox_link, add_streaming_data, letters_only, to_infobox_list, extract_and_group_results, initialize_result_data
+from gmdb.views.detail_queries import CREW_PROP_MAPPING, DETAIL_CREW_Q_STR, DETAIL_Q_STR,  DETAIL_STAR_Q_STR, DETAIL_IMDB_RATING_Q_STR, DETAIL_CAST_Q_STR, DETAIL_DBPEDIA_Q_STR, DETAIL_COMPANY_Q_STR, DETAIL_STREAMING_Q_STR, GROUPED_VARS
+from gmdb.views.detail_utils import add_infobox_link, add_streaming_data, letters_only, prepare_query_str, to_infobox_list, extract_and_group_results, initialize_result_data
 
 
 def movie_detail(request, id):
@@ -16,8 +16,6 @@ def movie_detail(request, id):
 
     for group_var in GROUPED_VARS:
         result_data[group_var[0]] = {}
-
-    infobox_data = []
 
     # Querying from local database and Wikidata
     # ────────────────────────────────────────
@@ -29,33 +27,19 @@ def movie_detail(request, id):
 
     print("Query 1 done.")
 
-    # query_director_result = query_remote(prepare_query_str(DETAIL_DIRECTOR_Q_STR, f'<http://example.com/data/{id}>'))
-
-    # initialize_result_data(result_data, query_director_result)
-    # extract_and_group_results(result, result_data, query_director_result)
-
-    # print("Query 2 done.")
-
-    # query_screenwriter_result = query_remote(prepare_query_str(DETAIL_SCREENWRITER_Q_STR, f'<http://example.com/data/{id}>'))
-
-    # initialize_result_data(result_data, query_screenwriter_result)
-    # extract_and_group_results(result, result_data, query_screenwriter_result)
-
-    # print("Query 3 done.")
-
-    # query_producer_result = query_remote(prepare_query_str(DETAIL_PRODUCER_Q_STR, f'<http://example.com/data/{id}>'))
-
-    # initialize_result_data(result_data, query_producer_result)
-    # extract_and_group_results(result, result_data, query_producer_result)
-
-    # print("Query 4 done.")
-
     query_cast_result = query_remote(prepare_query_str(DETAIL_CAST_Q_STR, f'<http://example.com/data/{id}>'))
 
     initialize_result_data(result_data, query_cast_result)
     extract_and_group_results(result, result_data, query_cast_result)
 
-    print("Query 5 done.")
+    print("Query 2 done.")
+
+    query_all_crew_result = query_remote(prepare_query_str(DETAIL_CREW_Q_STR, f'<http://example.com/data/{id}>'))
+
+    initialize_result_data(result_data, query_all_crew_result)
+    extract_and_group_results(result, result_data, query_all_crew_result)
+
+    print("Query 3 done.")
 
     query_imdb_rating_result = query_remote(prepare_query_str(DETAIL_IMDB_RATING_Q_STR, f'<http://example.com/data/{id}>'))
 
@@ -63,56 +47,28 @@ def movie_detail(request, id):
         result_data['imdbRating'] = row['imdbRating']['value']
         result_data['imdbVotes'] = row['imdbVotes']['value']
 
-    print("Query 6 done.")
+    print("Query 4 done.")
 
     query_company_result = query_remote(prepare_query_str(DETAIL_COMPANY_Q_STR, f'<http://example.com/data/{id}>'))
 
     initialize_result_data(result_data, query_company_result)
     extract_and_group_results(result, result_data, query_company_result)
 
-    print("Query 7 done.")
+    print("Query 5 done.")
 
     query_star_result = query_remote(prepare_query_str(DETAIL_STAR_Q_STR, f'<http://example.com/data/{id}>'))
 
     initialize_result_data(result_data, query_star_result)
     extract_and_group_results(result, result_data, query_star_result)
 
-    print("Query 8 done.")
+    print("Query 6 done.")
 
     query_streaming_result = query_remote(prepare_query_str(DETAIL_STREAMING_Q_STR, f'<http://example.com/data/{id}>'))
 
     initialize_result_data(result_data, query_streaming_result)
     extract_and_group_results(result, result_data, query_streaming_result)
 
-    print("Query 9 done.")
-
-    # query_other_roles_result = query_remote(prepare_query_str(DETAIL_OTHER_ROLES_Q_STR, f'<http://example.com/data/{id}>'))
-
-    # initialize_result_data(result_data, query_other_roles_result)
-    # extract_and_group_results(result, result_data, query_other_roles_result)
-
-    # print("Query 10 done.")
-
-    # query_va_result = query_remote(prepare_query_str(DETAIL_VA_Q_STR, f'<http://example.com/data/{id}>'))
-
-    # initialize_result_data(result_data, query_va_result)
-    # extract_and_group_results(result, result_data, query_va_result)
-
-    # print("Query 11 done.")
-
-    # query_va_result = query_remote(prepare_query_str(DETAIL_EXEC_PRODUCER_Q_STR, f'<http://example.com/data/{id}>'))
-
-    # initialize_result_data(result_data, query_va_result)
-    # extract_and_group_results(result, result_data, query_va_result)
-
-    # print("Query 12 done.")
-
-    query_all_crew_result = query_remote(prepare_query_str(DETAIL_CREW_Q_STR, f'<http://example.com/data/{id}>'))
-
-    initialize_result_data(result_data, query_all_crew_result)
-    extract_and_group_results(result, result_data, query_all_crew_result)
-
-    print("Query 13 done.")
+    print("Query 7 done.")
 
 
     # Querying from DBpedia
@@ -168,15 +124,6 @@ def movie_detail(request, id):
 
     # Abstract
 
-    # From Wikipedia
-    # wp_name = result_data['articleName'][0]
-    # # abstract_response = requests.get(f"https://en.wikipedia.org/w/api.php?action=parse&format=json&prop=text&section=0&formatversion=2&page={wp_name}")
-    # # abstract_data = abstract_response.json()
-    # # abstract = abstract_data['parse']['text']
-    # abstract_response = requests.get(f"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&formatversion=2&exsentences=10&exlimit=1&explaintext=1&exsectionformat=wiki&titles={wp_name}")
-    # abstract_data = abstract_response.json()
-    # abstract = abstract_data['query']['pages'][0]['extract'].split(' ==')[0]
-
     abstract = None
     if result_data.get('abstract'):
         abstract = result_data['abstract']
@@ -200,6 +147,14 @@ def movie_detail(request, id):
 
     languages = to_infobox_list('originalLanguage', 'originalLanguageLabel', 'originalLanguageArticle', result_data=result_data)
 
+    # Production company
+
+    production_companies = to_infobox_list('productionCompany', 'productionCompanyLabel', 'productionCompanyArticle', result_data=result_data)
+
+    # Distributor
+
+    distributors = to_infobox_list('distributor', 'distributorLabel', 'distributorArticle', result_data=result_data)
+
     # Cast
 
     casts = []
@@ -214,39 +169,20 @@ def movie_detail(request, id):
             'img': cast_data.get('castImage')
         })
 
-    # Production company
+    # Star cast
 
-    production_companies = to_infobox_list('productionCompany', 'productionCompanyLabel', 'productionCompanyArticle', result_data=result_data)
+    star_casts = []
 
-    # Distributor
+    if 'starCast' in result_data:
+        for star_cast in result_data['starCast']:
+            star_cast_data = result_data['starCast'][star_cast]
+            cast_data_in_wdb = next((cast_data for cast_data in casts if letters_only(cast_data['label']) == letters_only(star_cast_data['starCastName'])), None)
+            star_casts.append({
+                'label': star_cast_data['starCastName'],
+                'url': cast_data_in_wdb.get('url') if cast_data_in_wdb else None,
+            })
 
-    distributors = to_infobox_list('distributor', 'distributorLabel', 'distributorArticle', result_data=result_data)
-
-    # # Director
-
-    # directors = to_infobox_list('director', 'directorLabel', 'directorArticle', 'directorImage', result_data=result_data)
-
-    # # Screenwriter
-
-    # screenwriters = to_infobox_list('screenwriter', 'screenwriterLabel', 'screenwriterArticle', 'screenwriterImage', result_data=result_data)
-
-    # # Producer
-
-    # producers = to_infobox_list('producer', 'producerLabel', 'producerArticle', 'producerImage', result_data=result_data)
-
-    # # Cinematorgrapher
-
-    # cinematographers = to_infobox_list('cinematographer', 'cinematographerLabel', 'cinematographerArticle', 'cinematographerImage', result_data=result_data)
-
-    # # Editor
-
-    # editors = to_infobox_list('editor', 'editorLabel', 'editorArticle', 'editorImage', result_data=result_data)
-
-    # # Composer
-
-    # composers = to_infobox_list('composer', 'composerLabel', 'composerArticle', 'composerImage', result_data=result_data)
-
-    print(result_data['crew'])
+    # Crew
 
     crew_categorized = {}
     cast_ids = [cast['id'] for cast in casts]
@@ -296,23 +232,11 @@ def movie_detail(request, id):
             'data': crew_categorized['Director']
         })
 
-    # if screenwriters:
-    #     cast_data.append({
-    #         'label': 'Screenwriter',
-    #         'data': screenwriters
-    #     })
-
     if crew_categorized.get('Screenwriter'):
         cast_data.append({
             'label': 'Screenwriter',
             'data': crew_categorized['Screenwriter']
         })
-
-    # if producers:
-    #     cast_data.append({
-    #         'label': 'Producer',
-    #         'data': producers
-    #     })
 
     if crew_categorized.get('Producer'):
         cast_data.append({
@@ -320,35 +244,17 @@ def movie_detail(request, id):
             'data': crew_categorized['Producer']
         })
 
-    # if cinematographers:
-    #     cast_data.append({
-    #         'label': 'Cinematography',
-    #         'data': cinematographers
-    #     })
-
     if crew_categorized.get('Cinematographer'):
         cast_data.append({
             'label': 'Cinematography',
             'data': crew_categorized['Cinematographer']
         })
 
-    # if editors:
-    #     cast_data.append({
-    #         'label': 'Editor',
-    #         'data': editors
-    #     })
-
     if crew_categorized.get('Editor'):
         cast_data.append({
             'label': 'Editor',
             'data': crew_categorized['Editor']
         })
-
-    # if composers:
-    #     cast_data.append({
-    #         'label': 'Composer',
-    #         'data': composers
-    #     })
 
     if crew_categorized.get('Composer'):
         cast_data.append({
@@ -370,22 +276,41 @@ def movie_detail(request, id):
             'data': crew_categorized['Other']
         })
 
-    # Star cast
-
-    star_casts = []
-
-    if 'starCast' in result_data:
-        for star_cast in result_data['starCast']:
-            star_cast_data = result_data['starCast'][star_cast]
-            cast_data_in_wdb = next((cast_data for cast_data in casts if letters_only(cast_data['label']) == letters_only(star_cast_data['starCastName'])), None)
-            star_casts.append({
-                'label': star_cast_data['starCastName'],
-                'url': cast_data_in_wdb.get('url') if cast_data_in_wdb else None,
-            })
-
-
-    # Compiling infobox data
+    # Compiling display data
     # ────────────────────────────────────────
+
+    # Subtitle
+
+    subtitle = []
+
+    if release_year:
+        subtitle.append(str(release_year))
+
+    if runtime:
+        subtitle.append(runtime['text'])
+
+    if result.get('certification'):
+        subtitle.append(result['certification'])
+
+    if result.get('genre'):
+        subtitle.append(', '.join(result['genre'].split(',')))
+
+    subtitle_text = ' · '.join(subtitle)
+
+    # Rating
+
+    rating_obj = {}
+
+    if result_data.get('imdbRating'):
+        rating_obj['imdbRating'] = result_data['imdbRating']
+
+    if result_data.get('imdbVotes'):
+        rating_obj['imdbVotes'] = result_data['imdbVotes']
+
+    if result_data.get('metaScore'):
+        rating_obj['metaScore'] = result_data['metaScore'][0]
+
+    # Streaming data
 
     streaming_data = []
 
@@ -413,17 +338,15 @@ def movie_detail(request, id):
 
     add_streaming_data('YouTube', ['https://www.youtube.com/watch?v=' + x for x in result_data.get('youtubeId', [])], 'simple-icons:youtube', '#FF0000', 'dark', streaming_data=streaming_data)
 
+    # Infobox data
+
+    infobox_data = []
+
     if result.get('genre'):
         infobox_data.append({
             'label': 'Genre',
             'data': result['genre'].split(',')
         })
-
-    # if directors:
-    #     infobox_data.append({
-    #         'label': 'Directed by',
-    #         'data': directors
-    #     })
 
     if crew_categorized.get('Director'):
         infobox_data.append({
@@ -431,23 +354,11 @@ def movie_detail(request, id):
             'data': crew_categorized['Director']
         })
 
-    # if screenwriters:
-    #     infobox_data.append({
-    #         'label': 'Screenplay by',
-    #         'data': screenwriters
-    #     })
-
     if crew_categorized.get('Screenwriter'):
         infobox_data.append({
             'label': 'Screenplay by',
             'data': crew_categorized['Screenwriter']
         })
-
-    # if producers:
-    #     infobox_data.append({
-    #         'label': 'Producer',
-    #         'data': producers
-    #     })
 
     if crew_categorized.get('Producer'):
         infobox_data.append({
@@ -461,35 +372,17 @@ def movie_detail(request, id):
             'data': star_casts
         })
 
-    # if cinematographers:
-    #     infobox_data.append({
-    #         'label': 'Cinematography',
-    #         'data': cinematographers
-    #     })
-
     if crew_categorized.get('Cinematographer'):
         infobox_data.append({
             'label': 'Cinematography',
             'data': crew_categorized['Cinematographer']
         })
 
-    # if editors:
-    #     infobox_data.append({
-    #         'label': 'Edited by',
-    #         'data': editors
-    #     })
-
     if crew_categorized.get('Editor'):
         infobox_data.append({
             'label': 'Edited by',
             'data': crew_categorized['Editor']
         })
-
-    # if composers:
-    #     infobox_data.append({
-    #         'label': 'Music by',
-    #         'data': composers
-    #     })
 
     if crew_categorized.get('Composer'):
         infobox_data.append({
@@ -569,6 +462,8 @@ def movie_detail(request, id):
             'data': '$' + humanize.intword(result.get('worldWideSales') or result.get('gross'))
         })
 
+    # Infobox links
+
     infobox_links = []
 
     add_infobox_link('Wikipedia', result.get('article'), 'simple-icons:wikipedia', infobox_links)
@@ -586,33 +481,6 @@ def movie_detail(request, id):
     add_infobox_link('Letterboxd', f"https://letterboxd.com/film/{result.get('leterboxdId')}", 'simple-icons:letterboxd', infobox_links)
 
     add_infobox_link('Metacritic', f"https://www.metacritic.com/{result.get('metacriticId')}", 'simple-icons:metacritic', infobox_links)
-
-    subtitle = []
-
-    if release_year:
-        subtitle.append(str(release_year))
-
-    if runtime:
-        subtitle.append(runtime['text'])
-
-    if result.get('certification'):
-        subtitle.append(result['certification'])
-
-    if result.get('genre'):
-        subtitle.append(', '.join(result['genre'].split(',')))
-
-    subtitle_text = ' · '.join(subtitle)
-
-    rating_obj = {}
-
-    if result_data.get('imdbRating'):
-        rating_obj['imdbRating'] = result_data['imdbRating']
-
-    if result_data.get('imdbVotes'):
-        rating_obj['imdbVotes'] = result_data['imdbVotes']
-
-    if result_data.get('metaScore'):
-        rating_obj['metaScore'] = result_data['metaScore'][0]
 
     context = {
         'movie_id': id,

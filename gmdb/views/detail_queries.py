@@ -1,5 +1,3 @@
-import re
-
 from gmdb.views import INITIAL_NAMESPACES
 
 DETAIL_NAMESPACES = INITIAL_NAMESPACES + """
@@ -60,12 +58,6 @@ DETAIL_Q_STR = DETAIL_NAMESPACES + """
 		}
     }
 """
-
-
-def prepare_query_str(query_str, uri, query='s'):
-    return re.sub(r'\?' + query + r'\b', uri, query_str)
-
-
 DETAIL_STAR_Q_STR = DETAIL_NAMESPACES + """
     SELECT * WHERE {
         ?s v:hasFilmCrew ?starCast .

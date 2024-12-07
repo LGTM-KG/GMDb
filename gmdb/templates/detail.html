@@ -36,17 +36,17 @@
                 </p>
             </div>
             <div class="movie-header-rating">
-                {% if rating.imdb_rating %}
+                {% if rating.imdbRating %}
                     <div>
                         <p class="movie-header-rating-source">IMDb</p>
-                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.imdb_rating }} <small>/10</small></p>
-                        <p class="movie-header-rating-sub">from {{ rating.imdb_votes }} votes</p>
+                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.imdbRating }} <small>/10</small></p>
+                        <p class="movie-header-rating-sub">from {{ rating.imdbVotes }} votes</p>
                     </div>
                 {% endif %}
-                {% if rating.meta_score %}
+                {% if rating.metaScore %}
                     <div>
                         <p class="movie-header-rating-source">Metacritic</p>
-                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.meta_score }} <small>/100</small></p>
+                        <p class="movie-header-rating-score"><i class="fa-solid fa-star"></i> {{ rating.metaScore }} <small>/100</small></p>
                     </div>
                 {% endif %}
             </div>

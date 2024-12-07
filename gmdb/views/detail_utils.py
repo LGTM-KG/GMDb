@@ -1,3 +1,4 @@
+import re
 from gmdb.views.detail_queries import GROUPED_VARS_FLAT, GROUPED_VARS
 
 
@@ -95,3 +96,7 @@ def initialize_result_data(result_data, query_2_result):
 
 def letters_only(string):
     return ''.join(filter(str.isalpha, string)).lower()
+
+
+def prepare_query_str(query_str, uri, query='s'):
+    return re.sub(r'\?' + query + r'\b', uri, query_str)
