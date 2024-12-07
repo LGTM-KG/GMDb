@@ -80,7 +80,7 @@ def query_search(query_str, *args):
 
 def query_genre(genre):
     return query_home_page("""
-    SELECT ?s ?movieName ?poster where {
+    SELECT DISTINCT ?s ?movieName ?poster where {
         ?s rdfs:label ?movieName ;
         v:poster ?poster ;
         v:genre ?genre .
@@ -93,7 +93,7 @@ def query_genre(genre):
 def home_page(request):
     # Top 20 Highest Rating Movies
     top_20_rating_list = query_home_page("""
-    SELECT ?s ?movieName ?poster where {
+    SELECT DISTINCT ?s ?movieName ?poster where {
         ?s rdfs:label ?movieName ;
         v:poster ?poster .
     } LIMIT 20
@@ -101,7 +101,7 @@ def home_page(request):
 
     # Top 20 Highest Grossing Movies
     top_20_grossing_list = query_home_page("""
-    SELECT ?s ?movieName ?poster ?worldWideSales WHERE {
+    SELECT DISTINCT ?s ?movieName ?poster ?worldWideSales WHERE {
         ?s rdfs:label ?movieName ;
         v:worldWideSales ?worldWideSales ;
         v:poster ?poster .
@@ -449,6 +449,8 @@ DETAIL_CAST_Q_STR = DETAIL_NAMESPACES + """
 		}
 	}"""
 
+DETAIL_VA_Q_STR = DETAIL_CAST_Q_STR.replace('P161', 'P725')
+
 DETAIL_DBPEDIA_Q_STR = INITIAL_NAMESPACES + """
     PREFIX dbo: <http://dbpedia.org/ontology/>
 
@@ -648,6 +650,13 @@ def movie_detail(request, id):
 
     print("Query 10 done.")
 
+    query_va_result = query_remote(prepare_query_str(DETAIL_VA_Q_STR, f'<http://example.com/data/{id}>'))
+
+    initialize_result_data_remote(result_data, query_va_result)
+    extract_and_group_results_remote(result, result_data, query_va_result)
+
+    print("Query 11 done.")
+
     # Querying from DBpedia
     # ────────────────────────────────────────
 
@@ -736,8 +745,11 @@ def movie_detail(request, id):
 
     casts = []
 
+    print(result_data['cast'])
+
     for cast_member in result_data['cast']:
         cast_data = result_data['cast'][cast_member]
+        print(cast_data)
         casts.append({
             'label': cast_data.get('castLabel'),
             'url': cast_data.get('castArticle'),
