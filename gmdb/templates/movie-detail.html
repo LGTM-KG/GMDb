@@ -14,7 +14,7 @@
         <div class="movie-header mb-2">
             <div class="movie-header-title">
                 <h1>{{ movie_name }}</h1>
-                <p>{{ release_year }} · {{ certification }} · {{ runtime.text }}</p>
+                <p>{{ subtitle }}</p>
             </div>
             <div class="movie-header-overview">
                 <p>{{ overview }}</p>
@@ -78,7 +78,11 @@
                                 {% if entry.data|isinstance:"list" %}
                                     {% if entry.data|length == 1 %}
                                         {% if entry.data.0|isinstance:"dict" %}
-                                            <a href="{{ entry.data.0.url }}" rel="noopener" target="_blank">{{ entry.data.0.label }}</a>
+                                            {% if entry.data.0.url %}
+                                                <a href="{{ entry.data.0.url }}" rel="noopener" target="_blank">{{ entry.data.0.label }}</a>
+                                            {% else %}
+                                                {{ entry.data.0.label }}
+                                            {% endif %}
                                         {% else %}
                                             {{ entry.data.0 }}
                                         {% endif %}
@@ -87,7 +91,11 @@
                                     {% for item in entry.data %}
                                         {% if item|isinstance:"dict" %}
                                             <li>
-                                                <a href="{{ item.url }}" rel="noopener" target="_blank">{{ item.label }}</a>
+                                                {% if item.url %}
+                                                    <a href="{{ item.url }}" rel="noopener" target="_blank">{{ item.label }}</a>
+                                                {% else %}
+                                                    {{ item.label }}
+                                                {% endif %}
                                             </li>
                                         {% else %}
                                             <li>{{ item }}</li>
@@ -97,7 +105,11 @@
                             {% endif %}
                                 {% else %}
                                     {% if entry.data|isinstance:"dict" %}
-                                        <a href="{{ entry.data.url }}" rel="noopener" target="_blank">{{ entry.data.label }}</a>
+                                        {% if entry.data.url %}
+                                            <a href="{{ entry.data.url }}" rel="noopener" target="_blank">{{ entry.data.label }}</a>
+                                        {% else %}
+                                            {{ entry.data.label }}
+                                        {% endif %}
                                     {% else %}
                                         {{ entry.data }}
                                     {% endif %}
@@ -115,10 +127,7 @@
 
                             {% for entry in infobox_links %}
                             <a href="{{ entry.url }}" rel="noopener" target="_blank">
-                                {% if entry.icon %}
-                                <iconify-icon icon="{{ entry.icon }}"></iconify-icon>
-                                {% endif %}
-                                {{ entry.label }}</a>
+                                {% if entry.icon %}<iconify-icon icon="{{ entry.icon }}"></iconify-icon>{% endif %}&nbsp;{{ entry.label }}</a>
                             {% if not forloop.last %}·{% endif %}
 
                             {% endfor %}

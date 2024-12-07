@@ -8,12 +8,16 @@ import requests
 import humanize
 
 local_g = rdflib.Graph()
-local_g.parse('Integrated_Movies_Triples.ttl')
+# local_g.parse('Integrated_Movies_Triples.ttl')
 
 sparql = SPARQLWrapper(
     "http://localhost:7200/repositories/GMDb"
 )
 sparql.setReturnFormat(JSON)
+
+def query_remote(query_str):
+    sparql.setQuery(query_str)
+    return sparql.query().convert()
 
 INITIAL_NAMESPACES = """
 PREFIX : <http://example.com/data/> 
@@ -27,8 +31,7 @@ PREFIX schema: <http://schema.org/>
 
 def query_home_page(query_str, *args):
     returned_data = []
-    sparql.setQuery(INITIAL_NAMESPACES + query_str)
-    q_data = sparql.query().convert()
+    q_data = query_remote(INITIAL_NAMESPACES + query_str)
 
     for row in q_data['results']['bindings']:
         poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', row['poster']['value'])
@@ -44,10 +47,7 @@ def query_home_page(query_str, *args):
 
 def query_search(query_str, *args):
     returned_data = []
-    sparql.setQuery(INITIAL_NAMESPACES + query_str)
-    print(INITIAL_NAMESPACES + query_str)
-
-    q_data = sparql.query().convert()
+    q_data = query_remote(INITIAL_NAMESPACES + query_str)
 
     for row in q_data['results']['bindings']:
         print(row)
@@ -217,9 +217,7 @@ DETAIL_NAMESPACES = INITIAL_NAMESPACES + """
     PREFIX ps: <http://www.wikidata.org/prop/statement/>
 """
 
-
-DETAIL_Q = prepareQuery(
-    DETAIL_NAMESPACES + """ 
+DETAIL_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
 		?s rdfs:label ?label .
 		?s v:hasWikidata ?item .
@@ -268,6 +266,7 @@ DETAIL_Q = prepareQuery(
                     ?cinematographer ^schema:about ?cinematographerArticle .
                     ?cinematographerArticle schema:isPartOf <https://en.wikipedia.org/>.
                 }
+                OPTIONAL { ?cinematographer wdt:P18 ?cinematographerImage . }
             }
             OPTIONAL {
                 ?item wdt:P1040 ?editor .
@@ -277,6 +276,7 @@ DETAIL_Q = prepareQuery(
                     ?editor ^schema:about ?editorArticle .
                     ?editorArticle schema:isPartOf <https://en.wikipedia.org/>.
                 }
+                OPTIONAL { ?editor wdt:P18 ?editorImage . }
             }
             OPTIONAL {
                 ?item wdt:P86 ?composer .
@@ -286,6 +286,7 @@ DETAIL_Q = prepareQuery(
                     ?composer ^schema:about ?composerArticle .
                     ?composerArticle schema:isPartOf <https://en.wikipedia.org/>.
                 }
+                OPTIONAL { ?composer wdt:P18 ?composerImage . }
             }
             OPTIONAL { ?item wdt:P345 ?imdbId . }
             OPTIONAL { ?item wdt:P4947 ?tmdbId . }
@@ -294,11 +295,60 @@ DETAIL_Q = prepareQuery(
             OPTIONAL { ?item wdt:P6127 ?leterboxdId . }
             OPTIONAL { ?item wdt:P1712 ?metacriticId . }
 		}
-	}"""
-)
+    }
+"""
 
-DETAIL_STAR_Q = prepareQuery(
-    DETAIL_NAMESPACES + """
+import re
+
+# replace ?s with the given URI <uri>
+
+# DETAIL_Q_REP = re.sub(r'\b\?s\b', '<uri>', DETAIL_Q_STR)
+# with 
+
+def prepare_query_str(query_str, uri):
+    return re.sub(r'\?s\b', uri, query_str)
+
+DETAIL_OTHER_ROLES_Q_STR = DETAIL_NAMESPACES + """
+    SELECT * WHERE {
+        ?s v:hasWikidata ?item .
+        SERVICE <https://query.wikidata.org/sparql> {
+            OPTIONAL {
+                ?item wdt:P344 ?cinematographer .
+                ?cinematographer rdfs:label ?cinematographerLabel .
+                FILTER(LANG(?cinematographerLabel) = "en")
+                OPTIONAL {
+                    ?cinematographer ^schema:about ?cinematographerArticle .
+                    ?cinematographerArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+                OPTIONAL { ?cinematographer wdt:P18 ?cinematographerImage . }
+            }
+            OPTIONAL {
+                ?item wdt:P1040 ?editor .
+                ?editor rdfs:label ?editorLabel .
+                FILTER(LANG(?editorLabel) = "en")
+                OPTIONAL {
+                    ?editor ^schema:about ?editorArticle .
+                    ?editorArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+                OPTIONAL { ?editor wdt:P18 ?editorImage . }
+            }
+            OPTIONAL {
+                ?item wdt:P86 ?composer .
+                ?composer rdfs:label ?composerLabel .
+                FILTER(LANG(?composerLabel) = "en")
+                OPTIONAL {
+                    ?composer ^schema:about ?composerArticle .
+                    ?composerArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+                OPTIONAL { ?composer wdt:P18 ?composerImage . }
+            }       
+        }
+    }
+    """
+
+# DETAIL_Q = prepareQuery(DETAIL_Q_STR + "}")
+
+DETAIL_STAR_Q_STR = DETAIL_NAMESPACES + """
     SELECT * WHERE {
         ?s v:hasFilmCrew ?starCast .
         ?starCast v:hasRole v:Star .
@@ -306,21 +356,20 @@ DETAIL_STAR_Q = prepareQuery(
         ?starCastCast rdfs:label ?starCastName .
     }
     """
-)
 
-        
-DETAIL_IMDB_RATING_Q = prepareQuery(
-    DETAIL_NAMESPACES + """
+# DETAIL_STAR_Q = prepareQuery(DETAIL_STAR_Q_STR)
+
+DETAIL_IMDB_RATING_Q_STR = DETAIL_NAMESPACES + """
     SELECT ?imdbRating ?imdbVotes WHERE {
         ?s v:imdbScore ?imdbScore .
         ?imdbScore v:rating ?imdbRating .
         ?imdbScore v:numOfVotes ?imdbVotes .    
     }
     """
-)
 
-DETAIL_PRODUCER_Q = prepareQuery(
-    DETAIL_NAMESPACES + """ 
+# DETAIL_IMDB_RATING_Q = prepareQuery(DETAIL_IMDB_RATING_Q_STR)
+
+DETAIL_PRODUCER_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
         ?s v:hasWikidata ?item .
         SERVICE <https://query.wikidata.org/sparql> {
@@ -337,10 +386,8 @@ DETAIL_PRODUCER_Q = prepareQuery(
         }
     }
     """
-)
 
-DETAIL_SCREENWRITER_Q = prepareQuery(
-    DETAIL_NAMESPACES + """ 
+DETAIL_SCREENWRITER_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
         ?s v:hasWikidata ?item .
         SERVICE <https://query.wikidata.org/sparql> {
@@ -357,10 +404,8 @@ DETAIL_SCREENWRITER_Q = prepareQuery(
         }
     }
     """
-)
 
-DETAIL_DIRECTOR_Q = prepareQuery(
-    DETAIL_NAMESPACES + """ 
+DETAIL_DIRECTOR_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
         ?s v:hasWikidata ?item .
         SERVICE <https://query.wikidata.org/sparql> {
@@ -377,10 +422,8 @@ DETAIL_DIRECTOR_Q = prepareQuery(
         }
     }
     """
-)
 
-DETAIL_CAST_Q = prepareQuery(
-    DETAIL_NAMESPACES + """ 
+DETAIL_CAST_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
 		?s v:hasWikidata ?item .
 		SERVICE <https://query.wikidata.org/sparql> {
@@ -405,10 +448,8 @@ DETAIL_CAST_Q = prepareQuery(
             }
 		}
 	}"""
-)
 
-DETAIL_DBPEDIA_Q = prepareQuery(
-    INITIAL_NAMESPACES + """
+DETAIL_DBPEDIA_Q_STR = INITIAL_NAMESPACES + """
     PREFIX dbo: <http://dbpedia.org/ontology/>
 
     SELECT * WHERE {
@@ -419,10 +460,8 @@ DETAIL_DBPEDIA_Q = prepareQuery(
         }
     } LIMIT 1
     """
-)
 
-DETAIL_COMPANY_Q = prepareQuery(
-    DETAIL_NAMESPACES + """ 
+DETAIL_COMPANY_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
 		?s v:hasWikidata ?item .
 		SERVICE <https://query.wikidata.org/sparql> {
@@ -446,10 +485,8 @@ DETAIL_COMPANY_Q = prepareQuery(
             }
 		}
 	}"""
-)
 
-DETAIL_STREAMING_Q = prepareQuery(
-    DETAIL_NAMESPACES + """
+DETAIL_STREAMING_Q_STR = DETAIL_NAMESPACES + """
     SELECT * WHERE {
         ?s v:hasWikidata ?item .
         SERVICE <https://query.wikidata.org/sparql> {
@@ -467,7 +504,6 @@ DETAIL_STREAMING_Q = prepareQuery(
         }
     }
     """
-)
 
 GROUPED_VARS = [
     ('country', 'countryLabel', 'countryArticle', 'countryArticleName'),
@@ -478,13 +514,57 @@ GROUPED_VARS = [
     ('cast', 'castLabel', 'castArticle', 'castArticleName', 'castCharacterLabel', 'castCharacterName', 'castImage'),
     ('productionCompany', 'productionCompanyLabel', 'productionCompanyArticle', 'productionCompanyArticleName'),
     ('distributor', 'distributorLabel', 'distributorArticle', 'distributorArticleName'),
-    ('cinematographer', 'cinematographerLabel', 'cinematographerArticle', 'cinematographerArticleName'),
-    ('editor', 'editorLabel', 'editorArticle', 'editorArticleName'),
+    ('cinematographer', 'cinematographerLabel', 'cinematographerArticle', 'cinematographerArticleName', 'cinematographerImage'),
+    ('editor', 'editorLabel', 'editorArticle', 'editorArticleName', 'editorImage'),
     ('composer', 'composerLabel', 'composerArticle', 'composerArticleName'),
     ('starCast', 'starCastName', 'starCastCast'),
 ]
 
 GROUPED_VARS_FLAT = [var for group in GROUPED_VARS for var in group]
+
+
+def add_infobox_link(label, url, icon=None, infobox_links=[]):
+    if not url:
+        return
+    
+    data_to_add = {
+        'label': label,
+        'url': url,
+        'icon': icon if icon else 'fa6-solid:globe'
+    }
+
+    infobox_links.append(data_to_add)
+
+def add_streaming_data(label, urls, icon=None, color=None, theme=None, streaming_data={}):
+    if not urls:
+        return
+    
+    data_to_add = {
+        'label': label,
+        'urls': urls,
+        'icon': icon if icon else 'fa6-solid:globe',
+        'color': color if color else '',
+        'theme': theme if theme else 'dark'
+    }
+
+    streaming_data.append(data_to_add)
+
+
+def to_infobox_list(key, label_key, url_key=None, img_key=None, result_data={}):
+    if key not in result_data:
+        return []
+    infobox_list_data = []
+    for item in result_data[key]:
+        item_data = result_data[key][item]
+        data_to_add = {}
+        data_to_add['label'] = item_data[label_key]
+        if url_key and item_data.get(url_key):
+            data_to_add['url'] = item_data[url_key]
+        if img_key and item_data.get(img_key):
+            data_to_add['img'] = item_data[img_key]
+        infobox_list_data.append(data_to_add)
+    return infobox_list_data
+
 
 def movie_detail(request, id):
     result = None
@@ -498,77 +578,85 @@ def movie_detail(request, id):
     # Querying from local database and Wikidata
     # ────────────────────────────────────────
 
-    query_result = local_g.query(DETAIL_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_result = query_remote(prepare_query_str(DETAIL_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_result)
-    result = extract_and_group_results(result, result_data, query_result)
+    initialize_result_data_remote(result_data, query_result)
+    result = extract_and_group_results_remote(result, result_data, query_result)
 
     print("Query 1 done.")
 
-    query_director_result = local_g.query(DETAIL_DIRECTOR_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_director_result = query_remote(prepare_query_str(DETAIL_DIRECTOR_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_director_result)
-    extract_and_group_results(result, result_data, query_director_result)
+    initialize_result_data_remote(result_data, query_director_result)
+    extract_and_group_results_remote(result, result_data, query_director_result)
 
     print("Query 2 done.")
 
-    query_screenwriter_result = local_g.query(DETAIL_SCREENWRITER_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_screenwriter_result = query_remote(prepare_query_str(DETAIL_SCREENWRITER_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_screenwriter_result)
-    extract_and_group_results(result, result_data, query_screenwriter_result)
+    initialize_result_data_remote(result_data, query_screenwriter_result)
+    extract_and_group_results_remote(result, result_data, query_screenwriter_result)
 
     print("Query 3 done.")
 
-    query_producer_result = local_g.query(DETAIL_PRODUCER_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_producer_result = query_remote(prepare_query_str(DETAIL_PRODUCER_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_producer_result)
-    extract_and_group_results(result, result_data, query_producer_result)
+    initialize_result_data_remote(result_data, query_producer_result)
+    extract_and_group_results_remote(result, result_data, query_producer_result)
 
     print("Query 4 done.")
-    
-    query_cast_result = local_g.query(DETAIL_CAST_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
 
-    initialize_result_data(result_data, query_cast_result)
-    extract_and_group_results(result, result_data, query_cast_result)
+    query_cast_result = query_remote(prepare_query_str(DETAIL_CAST_Q_STR, f'<http://example.com/data/{id}>'))
+
+    initialize_result_data_remote(result_data, query_cast_result)
+    extract_and_group_results_remote(result, result_data, query_cast_result)
 
     print("Query 5 done.")
 
-    query_imdb_rating_result = local_g.query(DETAIL_IMDB_RATING_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_imdb_rating_result = query_remote(prepare_query_str(DETAIL_IMDB_RATING_Q_STR, f'<http://example.com/data/{id}>'))
 
-    for row in query_imdb_rating_result:
-        result_data['imdbRating'] = row.imdbRating
-        result_data['imdbVotes'] = row.imdbVotes
+    for row in query_imdb_rating_result['results']['bindings']:
+        result_data['imdbRating'] = row['imdbRating']['value']
+        result_data['imdbVotes'] = row['imdbVotes']['value']
 
     print("Query 6 done.")
 
-    query_company_result = local_g.query(DETAIL_COMPANY_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_company_result = query_remote(prepare_query_str(DETAIL_COMPANY_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_company_result)
-    extract_and_group_results(result, result_data, query_company_result)
+    initialize_result_data_remote(result_data, query_company_result)
+    extract_and_group_results_remote(result, result_data, query_company_result)
 
     print("Query 7 done.")
 
-    query_star_result = local_g.query(DETAIL_STAR_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_star_result = query_remote(prepare_query_str(DETAIL_STAR_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_star_result)
-    extract_and_group_results(result, result_data, query_star_result)
+    initialize_result_data_remote(result_data, query_star_result)
+    extract_and_group_results_remote(result, result_data, query_star_result)
 
     print("Query 8 done.")
 
-    query_streaming_result = local_g.query(DETAIL_STREAMING_Q, initBindings={'s': rdflib.URIRef('http://example.com/data/' + id)})
+    query_streaming_result = query_remote(prepare_query_str(DETAIL_STREAMING_Q_STR, f'<http://example.com/data/{id}>'))
 
-    initialize_result_data(result_data, query_streaming_result)
-    extract_and_group_results(result, result_data, query_streaming_result)
+    initialize_result_data_remote(result_data, query_streaming_result)
+    extract_and_group_results_remote(result, result_data, query_streaming_result)
 
     print("Query 9 done.")
+
+    query_other_roles_result = query_remote(prepare_query_str(DETAIL_OTHER_ROLES_Q_STR, f'<http://example.com/data/{id}>'))
+
+    initialize_result_data_remote(result_data, query_other_roles_result)
+    extract_and_group_results_remote(result, result_data, query_other_roles_result)
+
+    print("Query 10 done.")
 
     # Querying from DBpedia
     # ────────────────────────────────────────
 
-    query_dbpedia_result = local_g.query(DETAIL_DBPEDIA_Q, initBindings={'article': rdflib.URIRef(result.article.replace('https', 'http'))})
+    query_dbpedia_result = query_remote(prepare_query_str(DETAIL_DBPEDIA_Q_STR, f'<http://example.com/data/{id}>'))
 
-    for row in query_dbpedia_result:
-        result_data['abstract'] = row.abstract
+    for row in query_dbpedia_result['results']['bindings']:
+        result_data['abstract'] = row['abstract']['value']
+        break
 
     print("Query DBpedia done.")
 
@@ -577,11 +665,11 @@ def movie_detail(request, id):
 
     # Release year and date
 
-    release_year = result.releasedYear
-    if result.releaseDate:
-        release_year = datetime.datetime.strptime(result.releaseDate, "%Y-%m-%d").year
+    release_year = result.get('releasedYear')
+    if result.get('releaseDate'):
+        release_year = datetime.datetime.strptime(result.get('releaseDate'), "%Y-%m-%d").year
 
-    release_date = result.releaseDate
+    release_date = result.get('releaseDate')
     if release_date:
         release_date = datetime.datetime.strptime(release_date, "%Y-%m-%d").strftime("%d %B %Y")
     elif release_year:
@@ -589,27 +677,28 @@ def movie_detail(request, id):
 
     # Runtime
 
-    runtime_minutes = int(result.runtime)
-    runtime = {
-        'hours': runtime_minutes // 60,
-        'minutes': runtime_minutes % 60,
-        'total_minutes': runtime_minutes,
-        'text': f"{runtime_minutes // 60} h {runtime_minutes % 60} m"
-    }
+    if result.get('runtime'):
+        runtime_minutes = int(result['runtime'])
+        runtime = {
+            'hours': runtime_minutes // 60,
+            'minutes': runtime_minutes % 60,
+            'total_minutes': runtime_minutes,
+            'text': f"{runtime_minutes // 60} h {runtime_minutes % 60} m"
+        }
 
     # Poster
 
-    if result.poster:
-        poster = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', str(result.poster))
-        request_poster = requests.head(poster)
-        if request_poster.status_code != 200:
-            poster = None
-    else:
-        poster = None
+    if result.get('poster'):
+        poster = result['poster']
+        if poster:
+            poster = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', poster)
+            request_poster = requests.head(poster)
+            if request_poster.status_code != 200:
+                poster = None
 
     # Abstract
 
-    # wikipedia lead
+    # From Wikipedia
     # wp_name = result_data['articleName'][0]
     # # abstract_response = requests.get(f"https://en.wikipedia.org/w/api.php?action=parse&format=json&prop=text&section=0&formatversion=2&page={wp_name}")
     # # abstract_data = abstract_response.json()
@@ -617,6 +706,7 @@ def movie_detail(request, id):
     # abstract_response = requests.get(f"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&formatversion=2&exsentences=10&exlimit=1&explaintext=1&exsectionformat=wiki&titles={wp_name}")
     # abstract_data = abstract_response.json()
     # abstract = abstract_data['query']['pages'][0]['extract'].split(' ==')[0]
+    
     abstract = result_data['abstract']
     # get first 5 sentences
     if len(abstract.split('. ')) > 5:
@@ -624,61 +714,23 @@ def movie_detail(request, id):
 
     # Countries
 
-    countries = []
-
-    for country in result_data['country']:
-        country_data = result_data['country'][country]
-        countries.append({
-            'label': country_data['countryLabel'],
-            'url': country_data['countryArticle']
-        })
+    countries = to_infobox_list('country', 'countryLabel', 'countryArticle', result_data=result_data)
 
     # Languages
 
-    languages = []
-
-    for language in result_data['originalLanguage']:
-        language_data = result_data['originalLanguage'][language]
-        languages.append({
-            'label': language_data['originalLanguageLabel'],
-            'url': language_data['originalLanguageArticle']
-        })
+    languages = to_infobox_list('originalLanguage', 'originalLanguageLabel', 'originalLanguageArticle', result_data=result_data)
 
     # Director
 
-    directors = []
-
-    for director in result_data['director']:
-        director_data = result_data['director'][director]
-        directors.append({
-            'label': director_data['directorLabel'],
-            'url': director_data['directorArticle'],
-            'img': director_data['directorImage']
-        })
+    directors = to_infobox_list('director', 'directorLabel', 'directorArticle', 'directorImage', result_data=result_data)
         
     # Screenwriter
 
-    screenwriters = []
-
-    for screenwriter in result_data['screenwriter']:
-        screenwriter_data = result_data['screenwriter'][screenwriter]
-        screenwriters.append({
-            'label': screenwriter_data['screenwriterLabel'],
-            'url': screenwriter_data['screenwriterArticle'],
-            'img': screenwriter_data['screenwriterImage']
-        })
+    screenwriters = to_infobox_list('screenwriter', 'screenwriterLabel', 'screenwriterArticle', 'screenwriterImage', result_data=result_data)
 
     # Producer
 
-    producers = []
-
-    for producer in result_data['producer']:
-        producer_data = result_data['producer'][producer]
-        producers.append({
-            'label': producer_data['producerLabel'],
-            'url': producer_data['producerArticle'],
-            'img': producer_data['producerImage'] if producer_data['producerImage'] and producer_data['producerImage'] != None else None
-        })
+    producers = to_infobox_list('producer', 'producerLabel', 'producerArticle', 'producerImage', result_data=result_data)
 
     # Cast
 
@@ -687,66 +739,31 @@ def movie_detail(request, id):
     for cast_member in result_data['cast']:
         cast_data = result_data['cast'][cast_member]
         casts.append({
-            'label': cast_data['castLabel'],
-            'url': cast_data['castArticle'],
-            'role': cast_data['castCharacterLabel'] or cast_data['castCharacterName'],
-            'img': cast_data['castImage']
+            'label': cast_data.get('castLabel'),
+            'url': cast_data.get('castArticle'),
+            'role': cast_data.get('castCharacterLabel') or cast_data.get('castCharacterName'),
+            'img': cast_data.get('castImage')
         })
 
     # Production company
 
-    production_companies = []
-
-    for production_company in result_data['productionCompany']:
-        production_company_data = result_data['productionCompany'][production_company]
-        production_companies.append({
-            'label': production_company_data['productionCompanyLabel'],
-            'url': production_company_data['productionCompanyArticle']
-        })
+    production_companies = to_infobox_list('productionCompany', 'productionCompanyLabel', 'productionCompanyArticle', result_data=result_data)
 
     # Distributor
 
-    distributors = []
-
-    for distributor in result_data['distributor']:
-        distributor_data = result_data['distributor'][distributor]
-        distributors.append({
-            'label': distributor_data['distributorLabel'],
-            'url': distributor_data['distributorArticle']
-        })
+    distributors = to_infobox_list('distributor', 'distributorLabel', 'distributorArticle', result_data=result_data)
 
     # Cinematorgrapher
 
-    cinematographers = []
-
-    for cinematographer in result_data['cinematographer']:
-        cinematographer_data = result_data['cinematographer'][cinematographer]
-        cinematographers.append({
-            'label': cinematographer_data['cinematographerLabel'],
-            'url': cinematographer_data['cinematographerArticle']
-        })
+    cinematographers = to_infobox_list('cinematographer', 'cinematographerLabel', 'cinematographerArticle', 'cinematographerImage', result_data=result_data)
 
     # Editor
 
-    editors = []
-
-    for editor in result_data['editor']:
-        editor_data = result_data['editor'][editor]
-        editors.append({
-            'label': editor_data['editorLabel'],
-            'url': editor_data['editorArticle']
-        })
+    editors = to_infobox_list('editor', 'editorLabel', 'editorArticle', 'editorImage', result_data=result_data)
 
     # Composer
 
-    composers = []
-
-    for composer in result_data['composer']:
-        composer_data = result_data['composer'][composer]
-        composers.append({
-            'label': composer_data['composerLabel'],
-            'url': composer_data['composerArticle']
-        })
+    composers = to_infobox_list('composer', 'composerLabel', 'composerArticle', 'composerImage', result_data=result_data)
 
     star_casts = []
 
@@ -764,91 +781,29 @@ def movie_detail(request, id):
 
     print(result_data.get('disneyPlus'))
 
-    streaming_data = [
-        {
-            'label': 'Netflix',
-            'urls': ['https://www.netflix.com/title/' + str(x) for x in result_data['netflixId']] if next(filter(lambda x: x, result_data.get('netflixId')), None) else [],
-            'icon': 'simple-icons:netflix',
-            'color': '#E50914',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Amazon Prime Video',
-            'id': result_data['amazonId'],
-            'urls': ['https://www.amazon.com/dp/' + x for x in result_data['amazonId']] if next(filter(lambda x: x, result_data.get('amazonId')), None) else [],
-            'icon': 'simple-icons:primevideo',
-            'color': '#1F2E3E',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Apple TV',
-            'id': result_data['appleTvId'],
-            'urls': ['https://tv.apple.com/movie/' + x for x in result_data['appleTvId']] if next(filter(lambda x: x, result_data.get('appleTvId')), None) else [],
-            'icon': 'simple-icons:appletv',
-            'color': '#000000',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Google Play Movies',
-            'id': result_data['googlePlayId'],
-            'urls': ['https://play.google.com/store/movies/details?id=' + x for x in result_data['googlePlayId']] if next(filter(lambda x: x, result_data.get('googlePlayId')), None) else [],
-            'icon': 'simple-icons:googleplay',
-            'color': '#414141',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Movies Anywhere',
-            'id': result_data['moviesAnywhereId'],
-            'urls': ['https://moviesanywhere.com/movie/' + x for x in result_data['moviesAnywhereId']] if next(filter(lambda x: x, result_data.get('moviesAnywhereId')), None) else [],
-            'color': '#FFFFFF',
-            'theme': 'light'
-        },
-        {
-            'label': 'YouTube',
-            'id': result_data['youtubeId'],
-            'urls': ['https://www.youtube.com/watch?v=' + x for x in result_data['youtubeId']] if next(filter(lambda x: x, result_data.get('youtubeId')), None) else [],
-            'icon': 'simple-icons:youtube',
-            'color': '#FF0000',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Disney+',
-            'id': result_data['disneyPlus'],
-            'urls': ['https://www.disneyplus.com/movies/wd/' + str(x) for x in result_data['disneyPlus']] if next(filter(lambda x: x, result_data.get('disneyPlus')), None) else [],
-            'color': '#176678',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Plex',
-            'id': result_data['plexId'],
-            'urls': ['https://app.plex.tv/desktop/#!/provider/tv.plex.provider.metadata/details?key=/library/metadata/' + x for x in result_data['plexId']] if next(filter(lambda x: x, result_data.get('plexId')), None) else [],
-            'icon': 'simple-icons:plex',
-            'color': '#EBAF00',
-            'theme': 'light'
-        },
-        {
-            'label': 'Max',
-            'id': result_data['hboMaxId'],
-            'urls': ['https://play.max.com/show/' + str(x) for x in result_data['hboMaxId']] if next(filter(lambda x: x, result_data.get('hboMaxId')), None) else [],
-            'icon': 'simple-icons:hbo',
-            'color': '#000000',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Hulu',
-            'id': result_data['huluId'],
-            'urls': ['https://www.hulu.com/movie/' + str(x) for x in result_data['huluId']] if next(filter(lambda x: x, result_data.get('huluId')), None) else [],
-            'color': '#3bb53b',
-            'theme': 'dark'
-        },
-        {
-            'label': 'Fandango Now',
-            'id': result_data['fandangoNowId'],
-            'urls': ['https://www.fandangonow.com/details/' + x for x in result_data['fandangoNowId']] if next(filter(lambda x: x, result_data.get('fandangoNowId')), None) else [],
-            'color': '#000000',
-            'theme': 'dark'
-        }
-    ]
+    streaming_data = []
+
+    add_streaming_data('Amazon Prime Video', ['https://www.amazon.com/dp/' + x for x in result_data.get('amazonId', [])], 'simple-icons:primevideo', '#1F2E3E', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Apple TV', ['https://tv.apple.com/movie/' + x for x in result_data.get('appleTvId', [])], 'simple-icons:appletv', '#000000', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Disney+', ['https://www.disneyplus.com/movies/wd/' + str(x) for x in result_data.get('disneyPlus', [])], None, '#176678', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Fandango Now', ['https://www.fandangonow.com/details/' + x for x in result_data.get('fandangoNowId', [])], None, '#000000', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Google Play Movies', ['https://play.google.com/store/movies/details?id=' + x for x in result_data.get('googlePlayId', [])], 'simple-icons:googleplay', '#414141', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Hulu', ['https://www.hulu.com/movie/' + str(x) for x in result_data.get('huluId', [])], None, '#3bb53b', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Max', ['https://play.max.com/show/' + str(x) for x in result_data.get('hboMaxId', [])], 'simple-icons:hbo', '#000000', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Movies Anywhere', ['https://moviesanywhere.com/movie/' + x for x in result_data.get('moviesAnywhereId', [])], streaming_data=streaming_data)
+    
+    add_streaming_data('Netflix', ['https://www.netflix.com/title/' + str(x) for x in result_data.get('netflixId', [])], 'simple-icons:netflix', '#E50914', 'dark', streaming_data=streaming_data)
+    
+    add_streaming_data('Plex', ['https://app.plex.tv/desktop/#!/provider/tv.plex.provider.metadata/details?key=/library/metadata/' + x for x in result_data.get('plexId', [])], 'simple-icons:plex', '#EBAF00', 'light', streaming_data=streaming_data)
+    
+    add_streaming_data('YouTube', ['https://www.youtube.com/watch?v=' + x for x in result_data.get('youtubeId', [])], 'simple-icons:youtube', '#FF0000', 'dark', streaming_data=streaming_data)
 
     cast_data = [
         {
@@ -881,10 +836,12 @@ def movie_detail(request, id):
         }
     ]
 
-    if result.genre:
+    # if result.genre:
+    if result.get('genre'):
         infobox_data.append({
             'label': 'Genre',
-            'data': result.genre.split(',')
+            # 'data': result.genre.split(',')
+            'data': result['genre'].split(',')
         })
 
     if directors:
@@ -953,10 +910,10 @@ def movie_detail(request, id):
             'data': f'{runtime_minutes} minutes'
         })
 
-    if result.certification:
+    if result.get('certification'):
         infobox_data.append({
             'label': 'Certification',
-            'data': result.certification
+            'data': result['certification']
         })
 
     if countries:
@@ -971,111 +928,88 @@ def movie_detail(request, id):
             'data': languages
         })
 
-    if result.budget:
+    if result.get('budget'):
         infobox_data.append({
             'label': 'Budget',
-            'data': '$' + humanize.intword(result.budget)
+            'data': '$' + humanize.intword(result.get('budget'))
         })
 
-    if result.domesticOpening:
+    if result.get('domesticOpening'):
         infobox_data.append({
             'label': 'Domestic opening',
-            'data': '$' + humanize.intword(result.domesticOpening)
+            'data': '$' + humanize.intword(result.get('domesticOpening'))
         })
 
-    if result.domesticSales:
+    if result.get('domesticSales'):
         infobox_data.append({
             'label': 'Domestic sales',
-            'data': '$' + humanize.intword(result.domesticSales)
+            'data': '$' + humanize.intword(result.get('domesticSales'))
         })
 
-    if result.internationalSales:
+    if result.get('internationalSales'):
         infobox_data.append({
             'label': 'International sales',
-            'data': '$' + humanize.intword(result.internationalSales)
+            'data': '$' + humanize.intword(result.get('internationalSales'))
         })
 
-    if result.worldWideSales or result.gross:
+    if result.get('worldWideSales') or result.get('gross'):
         infobox_data.append({
             'label': 'Worldwide sales',
-            'data': '$' + humanize.intword(result.worldWideSales or result.gross)
+            'data': '$' + humanize.intword(result.get('worldWideSales') or result.get('gross'))
         })
 
+    infobox_links = []
 
-    infobox_links = [
-        {
-            'icon': 'simple-icons:wikipedia',
-            'label': 'Wikipedia',
-            'url': result.article
-        },
-        {
-            'icon': 'simple-icons:wikidata',
-            'label': 'Wikidata',
-            'url': result.item
-        }
-    ]
+    add_infobox_link('Wikipedia', result.get('article'), 'simple-icons:wikipedia', infobox_links)
 
-    if result.imdbId:
-        infobox_links.append({
-            'icon': 'simple-icons:imdb',
-            'label': 'IMDb',
-            'url': f"https://www.imdb.com/title/{result.imdbId}"
-        })
+    add_infobox_link('Wikidata', result.get('item'), 'simple-icons:wikidata', infobox_links)
 
-    if result.tmdbId:
-        infobox_links.append({
-            'icon': 'simple-icons:themoviedatabase',
-            'label': 'TMDB',
-            'url': f"https://www.themoviedb.org/movie/{result.tmdbId}"
-        })
+    add_infobox_link('IMDb', f"https://www.imdb.com/title/{result.get('imdbId')}", 'simple-icons:imdb', infobox_links)
 
-    if result.tvdbId:
-        infobox_links.append({
-            'label': 'TheTVDB',
-            'url': f"https://thetvdb.com/dereferrer/movie/{result.tvdbId}"
-        })
+    add_infobox_link('TMDB', f"https://www.themoviedb.org/movie/{result.get('tmdbId')}", 'simple-icons:themoviedatabase', infobox_links)
 
-    if result.rottenTomatoesId:
-        infobox_links.append({
-            'icon': 'simple-icons:rottentomatoes',
-            'label': 'Rotten Tomatoes',
-            'url': f"https://www.rottentomatoes.com/{result.rottenTomatoesId}"
-        })
+    add_infobox_link('TheTVDB', f"https://thetvdb.com/dereferrer/movie/{result.get('tvdbId')}", infobox_links=infobox_links)
 
-    if result.leterboxdId:
-        infobox_links.append({
-            'icon': 'simple-icons:letterboxd',
-            'label': 'Letterboxd',
-            'url': f"https://letterboxd.com/film/{result.leterboxdId}"
-        })
+    add_infobox_link('Rotten Tomatoes', f"https://www.rottentomatoes.com/{result.get('rottenTomatoesId')}", 'simple-icons:rottentomatoes', infobox_links)
 
-    if result.metacriticId:
-        infobox_links.append({
-            'icon': 'simple-icons:metacritic',
-            'label': 'Metacritic',
-            'url': f"https://www.metacritic.com/movie/{result.metacriticId}"
-        })
+    add_infobox_link('Letterboxd', f"https://letterboxd.com/film/{result.get('leterboxdId')}", 'simple-icons:letterboxd', infobox_links)
+
+    add_infobox_link('Metacritic', f"https://www.metacritic.com/movie/{result.get('metacriticId')}", 'simple-icons:metacritic', infobox_links)
+
+    subtitle = []
+
+    if release_year:
+        subtitle.append(str(release_year))
+
+    if runtime:
+        subtitle.append(runtime['text'])
+
+    if result.get('certification'):
+        subtitle.append(result['certification'])
+
+    if result.get('genre'):
+        subtitle.append(', '.join(result['genre'].split(',')))
+
+    subtitle_text = ' · '.join(subtitle)
 
     context = {
         'movie_id': id,
-        'movie_name': result.itemLabel or result.label,
-        'release_year': release_year,
-        'runtime': runtime,
-        'certification': result.certification,
+        'movie_name': result.get('itemLabel') or result.get('label'),
         'poster': poster,
         'abstract': abstract,
-        'overview': result.overview,
+        'overview': result.get('overview'),
         'rating': {
             'imdb_rating': str(result_data.get('imdbRating', '')),
             'imdb_votes': str(result_data.get('imdbVotes', '')),
             'meta_score': str(result_data.get('metaScore', [''])[0])
         },
-        'genre': result.genre.split(',') if result.genre else [],
+
         'infobox_data': infobox_data,
         'infobox_links': infobox_links,
         'cast_data': cast_data,
         'streaming_data': streaming_data,
-        'result': result
+        'result': result,
+        'subtitle': subtitle_text
     }
 
     return render(request, "movie-detail.html", context)
@@ -1122,3 +1056,49 @@ def extract_and_group_results(result, result_data, query_result):
             if group_value_key not in result_data[group_var_key]:
                 result_data[group_var_key][group_value_key] = group_value
     return result
+
+# when querying from remote using sparqlwrapper
+def extract_and_group_results_remote(result, result_data, query_result):
+    for row in query_result['results']['bindings']:
+        if result is None:
+            result = {}
+            
+        pending_value_group = {}
+
+        for key, value in row.items():
+            value_str = value['value'] if value else None
+            key_str = key
+
+            if not key_str in result:
+                result[key_str] = value_str
+
+            # find group_var that has key_str
+            group_var = next((group_var for group_var in GROUPED_VARS if key_str in group_var), None)
+
+            if group_var:
+                if group_var not in pending_value_group:
+                    pending_value_group[group_var] = {}
+                pending_value_group[group_var][key_str] = value_str
+            else:
+                if value_str not in result_data[key_str]:
+                    result_data[key_str].append(value_str)
+
+        for group_var, group_value in pending_value_group.items():
+            group_var_key = group_var[0]
+            group_value_key = group_value[group_var_key]
+
+            if group_var_key not in result_data:
+                result_data[group_var_key] = dict()
+
+            if group_value_key not in result_data[group_var_key]:
+                result_data[group_var_key][group_value_key] = group_value
+    return result
+
+def initialize_result_data_remote(result_data, query_2_result):
+    for var in query_2_result['head']['vars']:
+        var_str = var
+        if var_str in result_data:
+            continue
+        if var_str in GROUPED_VARS_FLAT:
+            continue
+        result_data[var_str] = []
