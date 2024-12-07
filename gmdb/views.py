@@ -142,7 +142,7 @@ def search_movies(request):
     search_args = build_search_args(request.GET)
 
     if request.GET.get("q"):
-        results = query_search("""
+        raw_results = query_search("""
         SELECT DISTINCT ?s ?movieName ?poster ?overview ?imdbRating ?runtime ?releasedYear ?director where {
             ?s rdfs:label ?movieName ;
                 v:releasedYear ?releasedYear ;
@@ -159,9 +159,20 @@ def search_movies(request):
         }
         # GROUP BY ?movieName
         """ + search_args.get('sort_filter'))
+
+        # Filter out duplicate movies
+
+        results = []
+        added_result_id = []
+
+        for result in raw_results:
+            if result['id'] not in added_result_id:
+                results.append(result)
+                added_result_id.append(result['id'])
+
     else:
         results = []
-        
+
     print(results)
 
     context = {
@@ -987,7 +998,7 @@ def movie_detail(request, id):
 
     add_infobox_link('Letterboxd', f"https://letterboxd.com/film/{result.get('leterboxdId')}", 'simple-icons:letterboxd', infobox_links)
 
-    add_infobox_link('Metacritic', f"https://www.metacritic.com/movie/{result.get('metacriticId')}", 'simple-icons:metacritic', infobox_links)
+    add_infobox_link('Metacritic', f"https://www.metacritic.com/{result.get('metacriticId')}", 'simple-icons:metacritic', infobox_links)
 
     subtitle = []
 

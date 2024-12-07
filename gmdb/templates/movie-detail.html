@@ -129,7 +129,6 @@
                             <a href="{{ entry.url }}" rel="noopener" target="_blank">
                                 {% if entry.icon %}<iconify-icon icon="{{ entry.icon }}"></iconify-icon>{% endif %}&nbsp;{{ entry.label }}</a>
                             {% if not forloop.last %}·{% endif %}
-
                             {% endfor %}
 
                         </td>
@@ -144,6 +143,8 @@
         <h2>Cast and crew</h2>
 
         {% for cast_section in cast_data %}
+
+        {% if cast_section.data %}
 
         <h3 class="mb-3">{{ cast_section.label }}</h3>
 
@@ -163,7 +164,7 @@
                         {% endif %}
                         <div class="col-12 col-md-8">
                             <div class="card-body">
-                                <h5 class="card-title {% if not cast.role %}mb-0{% endif %}">{% if cast.url %}<a href="{{ cast.url }}">{% endif %}{{ cast.label }}{% if cast.url %}</a>{% endif %}</h5>
+                                <h5 class="card-title {% if not cast.role %}mb-0{% endif %}">{% if cast.url %}<a href="{{ cast.url }}" rel="noopener" target="_blank">{% endif %}{{ cast.label }}{% if cast.url %}</a>{% endif %}</h5>
                                 {% if cast.role %}
                                     <p class="card-text">{{ cast.role }}</p>
                                 {% endif %}
@@ -175,26 +176,9 @@
             {% endfor %}
         </div>
 
+        {% endif %}
+
         {% endfor %}
-
-        <!-- 
-
-        <div class="card">
-            <div class="row g-0">
-                <div class="col-md-6">
-                    <img src="#" class="img-fluid rounded-start" alt="Movie Poster">
-                </div>
-                <div class="col-md-6">
-                    <div class="card-body">
-                        <h5 class="card-title">Movie Title</h5>
-                        <p class="card-text"><strong>Release Date:</strong> January 1, 2023</p>
-                        <p class="card-text"><strong>Director:</strong> John Doe</p>
-                        <p class="card-text"><strong>Genre:</strong> Action, Drama</p>
-                        <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur a felis et velit facilisis eleifend.</p>
-                    </div>
-                </div>
-            </div>
-        </div> -->
 
         <!-- <h2>Query result</h2>
         <pre class="text-wrap">{{ result }}</pre> -->
