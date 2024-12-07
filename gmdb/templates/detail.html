@@ -137,8 +137,12 @@
             </table>
         </div>
 
-        <h2>Abstract</h2>
-        <p>{{ abstract }}</p>
+        {% if abstract %}
+
+            <h2>Abstract</h2>
+            <p>{{ abstract }}</p>
+
+        {% endif %}
 
         <h2>Cast and crew</h2>
 

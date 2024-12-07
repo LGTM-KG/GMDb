@@ -91,3 +91,7 @@ def initialize_result_data(result_data, query_2_result):
         if var_str in GROUPED_VARS_FLAT:
             continue
         result_data[var_str] = []
+
+
+def letters_only(string):
+    return ''.join(filter(str.isalpha, string)).lower()

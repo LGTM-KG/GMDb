@@ -46,7 +46,6 @@ def query_search(query_str, *args):
     q_data = query_remote(INITIAL_NAMESPACES + query_str)
 
     for row in q_data['results']['bindings']:
-        print(row)
         if 'poster' in row:
             poster_url = re.sub(r'_U[XY]\d+.*?AL_', '_UX300_AL_', row['poster']['value'])
         else:
@@ -68,7 +67,7 @@ def query_search(query_str, *args):
             "runtime": f"{runtime // 60} h {runtime % 60} m",
             "releasedYear": row['releasedYear']['value'],
             "directorLabel": directorLabel,
-            "directorUrl": f"https://dbpedia.org/resource/{directorUrl}"
+            "directorUrl": f"https://en.wikipedia.org/wiki/{directorUrl}"
         }
 
         returned_data.append(data)
