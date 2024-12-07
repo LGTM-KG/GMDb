@@ -165,6 +165,23 @@ DETAIL_PRODUCER_Q_STR = DETAIL_NAMESPACES + """
         }
     }
     """
+DETAIL_EXEC_PRODUCER_Q_STR = DETAIL_NAMESPACES + """ 
+    SELECT * WHERE {
+        ?s v:hasWikidata ?item .
+        SERVICE <https://query.wikidata.org/sparql> {
+            OPTIONAL {
+                ?item wdt:P1431 ?producer .
+                ?producer rdfs:label ?producerLabel .
+                FILTER(LANG(?producerLabel) = "en")
+                OPTIONAL {
+                    ?producer ^schema:about ?producerArticle .
+                    ?producerArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+                OPTIONAL { ?producer wdt:P18 ?producerImage . }
+            }
+        }
+    }
+    """
 DETAIL_SCREENWRITER_Q_STR = DETAIL_NAMESPACES + """ 
     SELECT * WHERE {
         ?s v:hasWikidata ?item .
@@ -225,6 +242,54 @@ DETAIL_CAST_Q_STR = DETAIL_NAMESPACES + """
 		}
 	}"""
 DETAIL_VA_Q_STR = DETAIL_CAST_Q_STR.replace('P161', 'P725')
+# https://stackoverflow.com/questions/46383784/wikidata-get-all-properties-with-labels-and-values-of-an-item
+DETAIL_OTHER_CREW_Q_STR = DETAIL_NAMESPACES + """ 
+    SELECT * WHERE {
+        ?s v:hasWikidata ?item .
+        SERVICE <https://query.wikidata.org/sparql> {
+            OPTIONAL {
+                ?item ?crewProperty ?crew .
+            
+                ?crew wdt:P31 wd:Q5 .
+                ?crew rdfs:label ?crewLabel .
+                FILTER(LANG(?crewLabel) = "en")
+
+                OPTIONAL {
+                ?crew ^schema:about ?crewArticle .
+                ?crewArticle schema:isPartOf <https://en.wikipedia.org/>.
+                }
+                OPTIONAL { ?crew wdt:P18 ?crewImage . }
+            
+            #   OPTIONAL {
+            #     ?item ?anyProp ?crewRoleStatement .
+            #     ?crewRoleStatement ps:P3831 ?crewRole .  
+            #   }
+            
+                # hint:Query hint:optimizer "None" .
+                ?crewProp wikibase:directClaim ?crewProperty .
+            
+            #     {
+            #       ?prop wdt:P1647 ?b
+            #     } UNION {
+            #       ?prop wdt:P1629 ?b
+            #     }
+                        
+                {
+                ?crewProp wdt:P1629 wd:Q17291399
+                } UNION {
+                ?crewProp wdt:P1629 wd:Q4220920
+                } UNION {
+                ?crewProp wdt:P1647 wd:P767
+                } UNION {
+                ?crewProp wdt:P1647 wd:P3092      
+                }
+            
+                ?crewProp rdfs:label ?crewPropLabel .
+                FILTER(LANG(?crewPropLabel) = "en")
+            }
+        }
+    }
+    """
 DETAIL_DBPEDIA_Q_STR = INITIAL_NAMESPACES + """
     PREFIX dbo: <http://dbpedia.org/ontology/>
 
@@ -292,5 +357,6 @@ GROUPED_VARS = [
     ('editor', 'editorLabel', 'editorArticle', 'editorArticleName', 'editorImage'),
     ('composer', 'composerLabel', 'composerArticle', 'composerArticleName'),
     ('starCast', 'starCastName', 'starCastCast'),
+    ('crew', 'crewLabel', 'crewArticle', 'crewArticleName', 'crewImage', 'crewLabel', 'crewPropLabel'),
 ]
 GROUPED_VARS_FLAT = [var for group in GROUPED_VARS for var in group]

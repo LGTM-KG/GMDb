@@ -36,6 +36,7 @@ def to_infobox_list(key, label_key, url_key=None, img_key=None, result_data={}):
     for item in result_data[key]:
         item_data = result_data[key][item]
         data_to_add = {}
+        data_to_add['id'] = item_data[key]
         data_to_add['label'] = item_data[label_key]
         if url_key and item_data.get(url_key):
             data_to_add['url'] = item_data[url_key]
