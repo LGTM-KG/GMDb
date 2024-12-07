@@ -305,8 +305,8 @@ import re
 # DETAIL_Q_REP = re.sub(r'\b\?s\b', '<uri>', DETAIL_Q_STR)
 # with 
 
-def prepare_query_str(query_str, uri):
-    return re.sub(r'\?s\b', uri, query_str)
+def prepare_query_str(query_str, uri, query='s'):
+    return re.sub(r'\?' + query + r'\b', uri, query_str)
 
 DETAIL_OTHER_ROLES_Q_STR = DETAIL_NAMESPACES + """
     SELECT * WHERE {
@@ -549,7 +549,6 @@ def add_streaming_data(label, urls, icon=None, color=None, theme=None, streaming
 
     streaming_data.append(data_to_add)
 
-
 def to_infobox_list(key, label_key, url_key=None, img_key=None, result_data={}):
     if key not in result_data:
         return []
@@ -652,7 +651,8 @@ def movie_detail(request, id):
     # Querying from DBpedia
     # ────────────────────────────────────────
 
-    query_dbpedia_result = query_remote(prepare_query_str(DETAIL_DBPEDIA_Q_STR, f'<http://example.com/data/{id}>'))
+    # query_dbpedia_result = local_g.query(DETAIL_DBPEDIA_Q, initBindings={'article': rdflib.URIRef(result.article.replace('https', 'http'))})
+    query_dbpedia_result = query_remote(prepare_query_str(DETAIL_DBPEDIA_Q_STR, '<' + result['article'].replace('https', 'http') + '>', 'article'))
 
     for row in query_dbpedia_result['results']['bindings']:
         result_data['abstract'] = row['abstract']['value']
