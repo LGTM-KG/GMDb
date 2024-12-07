@@ -188,11 +188,9 @@ def movie_detail(request, id):
 
     casts = []
 
-    print(result_data['cast'])
 
     for cast_member in result_data['cast']:
         cast_data = result_data['cast'][cast_member]
-        print(cast_data)
         casts.append({
             'label': cast_data.get('castLabel'),
             'url': cast_data.get('castArticle'),
