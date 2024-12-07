@@ -1,5 +1,6 @@
 from django.urls import path
-from gmdb.views import *
+from gmdb.views.__init__ import *
+from gmdb.views.detail import movie_detail
 
 app_name = 'gmdb'
 
